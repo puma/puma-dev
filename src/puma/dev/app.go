@@ -213,3 +213,16 @@ func (a *AppPool) remove(app *App) {
 
 	delete(a.apps, app.Name)
 }
+
+func (a *AppPool) Purge() {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	for _, app := range a.apps {
+		app.t.Kill(nil)
+	}
+
+	for _, app := range a.apps {
+		app.t.Wait()
+	}
+}

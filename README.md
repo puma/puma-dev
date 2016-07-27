@@ -33,3 +33,9 @@ Puma-dev will startup by default using the directory `~/.puma-dev`, looking for 
 ### Coming from Pow
 
 By default, puma-dev uses the domain `.pdev` to manage your apps, so that it doesn't interfer with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
+
+### Purging
+
+If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
+
+`pkill -USR1 puma-dev`

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/mitchellh/go-homedir"
@@ -54,6 +56,17 @@ func main() {
 	var pool dev.AppPool
 	pool.Dir = dir
 	pool.IdleTime = *fTimeout
+
+	purge := make(chan os.Signal, 1)
+
+	signal.Notify(purge, syscall.SIGUSR1)
+
+	go func() {
+		for {
+			<-purge
+			pool.Purge()
+		}
+	}()
 
 	domains := strings.Split(*fDomains, ":")
 
