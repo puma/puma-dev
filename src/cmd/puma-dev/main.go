@@ -25,10 +25,20 @@ var (
 
 	fSetup         = flag.Bool("setup", false, "Run system setup")
 	fSetupSkipHTTP = flag.Bool("setup-skip-80", false, "Indicate if a firewall rule to redirect port 80 to our port should be skipped")
+
+	fInstall = flag.Bool("install", false, "Install puma-dev as a system service")
 )
 
 func main() {
 	flag.Parse()
+
+	if *fInstall {
+		err := dev.InstallIntoSystem(*fSetupSkipHTTP)
+		if err != nil {
+			log.Fatalf("Unable to install into system: %s", err)
+		}
+		return
+	}
 
 	if *fSetup {
 		err := dev.Setup(*fSetupSkipHTTP)

@@ -104,9 +104,11 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 
 	addr := l.Addr().(*net.TCPAddr)
 
-	cmd := exec.Command("bundle", "exec", "puma", "-C-",
-		"--tag", fmt.Sprintf("puma-dev:%s", name),
-		"-b", fmt.Sprintf("tcp://127.0.0.1:%d", addr.Port))
+	shell := os.Getenv("SHELL")
+
+	cmd := exec.Command(shell, "-l", "-i", "-c",
+		fmt.Sprintf("bundle exec puma -C- --tag puma-dev:%s -b tcp://127.0.0.1:%d",
+			name, addr.Port))
 
 	cmd.Dir = dir
 
