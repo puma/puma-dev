@@ -52,6 +52,20 @@ Running `puma-dev` in this way will require you to use the listed http port, whi
 
 By default, puma-dev uses the domain `.pdev` to manage your apps, so that it doesn't interfer with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
 
+### Configuration
+
+Puma-dev supports loading shell into the environment before puma starts. It checks for the following files in this order:
+
+* `.env`
+* `.powrc`
+* `.powenv`
+
+Additionally, puma-dev uses a few environment variables control how puma is started that you can overwrite in your loaded shell config.
+
+* `CONFIG`: A puma configuration file to load, usually something like `config/puma-dev.rb`. Defaults to no config.
+* `THREADS`: How many threads puma should use concurrently. Defaults to 5.
+* `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
+
 ### Purging
 
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:

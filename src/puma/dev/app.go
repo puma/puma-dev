@@ -16,6 +16,8 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
+const DefaultThreads = 5
+
 var ErrUnexpectedExit = errors.New("unexpected exit")
 
 type App struct {
@@ -154,6 +156,27 @@ func (a *App) UpdateUsed() {
 	a.lastUse = time.Now()
 }
 
+const executionShell = `# puma-dev generated at runtime
+if test -e .env; then
+	source .env
+fi
+
+if test -e .powrc; then
+	source .powrc
+fi
+
+if test -e .powenv; then
+	source .powenv
+fi
+
+if test -e Gemfile; then
+	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b tcp://127.0.0.1:%d
+fi
+
+
+exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b tcp://127.0.0.1:%d
+`
+
 func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 	// Create a listener socket and inject it
 	l, err := net.Listen("tcp", ":0")
@@ -166,14 +189,17 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 	shell := os.Getenv("SHELL")
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf("exec bundle exec puma -C- --tag puma-dev:%s -b tcp://127.0.0.1:%d",
-			name, addr.Port))
+		fmt.Sprintf(executionShell, name, addr.Port))
 
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("PUMA_INHERIT_0=3:tcp://127.0.0.1:%d", addr.Port))
+		fmt.Sprintf("PUMA_INHERIT_0=3:tcp://127.0.0.1:%d", addr.Port),
+		fmt.Sprintf("THREADS=%d", DefaultThreads),
+		"WORKERS=0",
+		"CONFIG=-",
+	)
 
 	tcpListener := l.(*net.TCPListener)
 	socket, err := tcpListener.File()
