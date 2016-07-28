@@ -22,13 +22,31 @@ You have the ability to configure most of the values that you'll use day-to-day.
 
 Run: `sudo puma-dev -setup`.
 
-This will configure the bits that require root access. If you're currently using pow and want to just try out puma-dev, I suggest using `sudo puma-dev -setup -setup-skip-80` to not install the port 80 redirect rule that will conflict with pow. You can still access apps, you'll just need to add port `9280` to your requests, such as `http://test.pdev:9280`.
+This will configure the bits that require root access, which is allowing your user access to the `/etc/resolver` directory.
 
-### Quickstart
+### Coming from v0.2
+
+Puma-dev v0.3 and later use launchd to access privileged ports, so if you installed v0.2, you'll need to remove the firewall rules.
+
+Run: `sudo puma-dev -cleanup`
+
+### Background Install/Upgrading for port 80 access
+
+If you want puma-dev to run in the background while you're logged in and on a common port, then you'll need to install it.
+
+*NOTE:* If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working)
+
+Run `puma-dev -install`.
+
+If you wish to have `puma-dev` use a port other than 80, pass it via the `-install-port`, for example to use port 81: `puma-dev -install -install-port 81`.
+
+### Running in the foreground
 
 Run: `puma-dev`
 
 Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s test /path/to/my/app`. You can now access your app as `test.pdev`.
+
+Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
 ### Coming from Pow
 
@@ -39,6 +57,10 @@ By default, puma-dev uses the domain `.pdev` to manage your apps, so that it doe
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
 `pkill -USR1 puma-dev`
+
+### Uninstall
+
+Run: `puma-dev -uninstall`
 
 ## Development
 
