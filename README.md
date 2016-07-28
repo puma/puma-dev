@@ -7,7 +7,6 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 * Easy startup and idle shutdown of rack/rails apps
 * Easy access to the apps using the `.pdev` subdomain **(configurable)**
 
-
 ### Why not just use pow?
 
 Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole.
@@ -75,6 +74,18 @@ If you would like to have puma-dev stop all the apps (for resource issues or bec
 ### Uninstall
 
 Run: `puma-dev -uninstall`
+
+## App usage
+
+Simple symlink your apps directory into `~/.puma-dev`! That's it!
+
+### Proxy support
+
+Puma-dev can also proxy requests from a nice dev domain to another app. To do so, simple write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
+
+For example, to have port 9292 show up as `awesome.pdev`: `echo 9292 > ~/.puma-dev/awesome`.
+
+Or to proxy to another host: `echo 10.3.1.2:9292 > ~/.puma-dev/awesome-elsewhere`.
 
 ## Development
 
