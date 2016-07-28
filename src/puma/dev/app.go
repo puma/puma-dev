@@ -2,13 +2,17 @@ package dev
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -22,10 +26,13 @@ var ErrUnexpectedExit = errors.New("unexpected exit")
 
 type App struct {
 	Name    string
+	Scheme  string
+	Host    string
 	Port    int
 	Command *exec.Cmd
 
-	dir string
+	address string
+	dir     string
 
 	t tomb.Tomb
 
@@ -37,8 +44,24 @@ type App struct {
 	lastUse time.Time
 }
 
+func (a *App) SetAddress(scheme, host string, port int) {
+	a.Scheme = scheme
+	a.Host = host
+	a.Port = port
+
+	if a.Port == 0 {
+		a.address = host
+	} else {
+		a.address = fmt.Sprintf("%s:%d", a.Host, a.Port)
+	}
+}
+
 func (a *App) Address() string {
-	return fmt.Sprintf("localhost:%d", a.Port)
+	if a.Port == 0 {
+		return a.Host
+	}
+
+	return fmt.Sprintf("%s:%d", a.Host, a.Port)
 }
 
 func (a *App) Kill() error {
@@ -225,12 +248,13 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 
 	app := &App{
 		Name:     name,
-		Port:     addr.Port,
 		Command:  cmd,
 		listener: l,
 		stdout:   stdout,
 		dir:      dir,
 	}
+
+	app.SetAddress("http", "127.0.0.1", addr.Port)
 
 	app.t.Go(app.watch)
 	app.t.Go(app.idleMonitor)
@@ -276,14 +300,57 @@ func (a *AppPool) App(name string) (*App, error) {
 
 	path := filepath.Join(a.Dir, name)
 
-	_, err := os.Stat(path)
+	stat, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("Unknown app: %s", name)
 	}
 
-	app, err = LaunchApp(a, name, path)
-	if err != nil {
-		return nil, err
+	if stat.IsDir() {
+		app, err = LaunchApp(a, name, path)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		app = &App{
+			Name: name,
+		}
+
+		data = bytes.TrimSpace(data)
+
+		port, err := strconv.Atoi(string(data))
+		if err == nil {
+			app.SetAddress("http", "127.0.0.1", port)
+		} else {
+			u, err := url.Parse(string(data))
+			if err != nil {
+				return nil, err
+			}
+
+			var (
+				sport, host string
+				port        int
+			)
+
+			host, sport, err = net.SplitHostPort(u.Host)
+			if err == nil {
+				port, err = strconv.Atoi(sport)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				host = u.Host
+			}
+
+			app.SetAddress(u.Scheme, host, port)
+		}
+
+		fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
+			name, app.Scheme, app.Address())
 	}
 
 	app.pool = a

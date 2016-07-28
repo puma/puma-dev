@@ -18,13 +18,13 @@ type HTTPServer struct {
 	proxy *httputil.ReverseProxy
 }
 
-func (h *HTTPServer) hostForApp(name string) string {
+func (h *HTTPServer) hostForApp(name string) (string, string) {
 	app, err := h.Pool.App(name)
 	if err != nil {
 		panic(err)
 	}
 
-	return app.Address()
+	return app.Scheme, app.Address()
 }
 
 func (h *HTTPServer) director(req *http.Request) {
@@ -32,8 +32,7 @@ func (h *HTTPServer) director(req *http.Request) {
 
 	app := parts[len(parts)-2]
 
-	req.URL.Scheme = "http"
-	req.URL.Host = h.hostForApp(app)
+	req.URL.Scheme, req.URL.Host = h.hostForApp(app)
 }
 
 func (h *HTTPServer) Serve(launchdSocket string) error {
