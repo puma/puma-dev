@@ -39,3 +39,15 @@ By default, puma-dev uses the domain `.pdev` to manage your apps, so that it doe
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
 `pkill -USR1 puma-dev`
+
+## Development
+
+To build puma-dev, follow these steps:
+
+* Install golang (http://golang.org)
+* Install gb (http://getgb.io)
+* Run `make`
+* Run `bin/puma-dev` to use your new binary
+
+Puma-dev use gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
+
