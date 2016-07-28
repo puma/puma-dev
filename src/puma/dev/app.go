@@ -107,7 +107,7 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 	shell := os.Getenv("SHELL")
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf("bundle exec puma -C- --tag puma-dev:%s -b tcp://127.0.0.1:%d",
+		fmt.Sprintf("exec bundle exec puma -C- --tag puma-dev:%s -b tcp://127.0.0.1:%d",
 			name, addr.Port))
 
 	cmd.Dir = dir
