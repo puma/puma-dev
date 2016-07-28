@@ -4,8 +4,11 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"puma/dev/launch"
 	"strings"
 	"time"
+
+	"gopkg.in/tomb.v2"
 )
 
 type HTTPServer struct {
@@ -33,7 +36,7 @@ func (h *HTTPServer) director(req *http.Request) {
 	req.URL.Host = h.hostForApp(app)
 }
 
-func (h *HTTPServer) Serve() error {
+func (h *HTTPServer) Serve(launchdSocket string) error {
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
@@ -56,5 +59,22 @@ func (h *HTTPServer) Serve() error {
 		Handler: h.proxy,
 	}
 
-	return serv.ListenAndServe()
+	if launchdSocket == "" {
+		return serv.ListenAndServe()
+	}
+
+	listeners, err := launch.SocketListeners(launchdSocket)
+	if err != nil {
+		return err
+	}
+
+	var t tomb.Tomb
+
+	for _, l := range listeners {
+		t.Go(func() error {
+			return serv.Serve(l)
+		})
+	}
+
+	return t.Wait()
 }

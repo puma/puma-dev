@@ -22,18 +22,32 @@ var (
 	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
 	fPow      = flag.Bool("pow", false, "Mimic pow's settings")
+	fLaunch   = flag.Bool("launchd", false, "Use socket from launchd")
 
-	fSetup         = flag.Bool("setup", false, "Run system setup")
-	fSetupSkipHTTP = flag.Bool("setup-skip-80", false, "Indicate if a firewall rule to redirect port 80 to our port should be skipped")
+	fSetup = flag.Bool("setup", false, "Run system setup")
 
-	fInstall = flag.Bool("install", false, "Install puma-dev as a system service")
+	fInstall     = flag.Bool("install", false, "Install puma-dev as a user service")
+	fInstallPort = flag.Int("install-port", 80, "Port to run puma-dev on when installed")
+
+	fCleanup   = flag.Bool("cleanup", false, "Cleanup old system settings")
+	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
 )
 
 func main() {
 	flag.Parse()
 
+	if *fCleanup {
+		dev.Cleanup()
+		return
+	}
+
+	if *fUninstall {
+		dev.Uninstall()
+		return
+	}
+
 	if *fInstall {
-		err := dev.InstallIntoSystem(*fSetupSkipHTTP)
+		err := dev.InstallIntoSystem(*fInstallPort)
 		if err != nil {
 			log.Fatalf("Unable to install into system: %s", err)
 		}
@@ -41,7 +55,7 @@ func main() {
 	}
 
 	if *fSetup {
-		err := dev.Setup(*fSetupSkipHTTP)
+		err := dev.Setup()
 		if err != nil {
 			log.Fatalf("Unable to configure OS X resolver: %s", err)
 		}
@@ -98,7 +112,12 @@ func main() {
 	fmt.Printf("* Directory for apps: %s\n", dir)
 	fmt.Printf("* Domains: %s\n", strings.Join(domains, ", "))
 	fmt.Printf("* DNS Server port: %d\n", *fPort)
-	fmt.Printf("* HTTP Server port: %d\n", *fHTTPPort)
+
+	if *fLaunch {
+		fmt.Printf("* HTTP Server port: inherited from launchd\n")
+	} else {
+		fmt.Printf("* HTTP Server port: %d\n", *fHTTPPort)
+	}
 
 	var dns dev.DNSResponder
 
@@ -111,6 +130,13 @@ func main() {
 	http.Address = fmt.Sprintf("127.0.0.1:%d", *fHTTPPort)
 	http.Pool = &pool
 
+	var socketName string
+
+	if *fLaunch {
+		socketName = "Socket"
+	}
+
 	fmt.Printf("! Puma dev listening\n")
-	http.Serve()
+
+	http.Serve(socketName)
 }
