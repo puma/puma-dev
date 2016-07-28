@@ -36,13 +36,15 @@ var (
 func main() {
 	flag.Parse()
 
+	domains := strings.Split(*fDomains, ":")
+
 	if *fCleanup {
 		dev.Cleanup()
 		return
 	}
 
 	if *fUninstall {
-		dev.Uninstall()
+		dev.Uninstall(domains)
 		return
 	}
 
@@ -101,8 +103,6 @@ func main() {
 		fmt.Printf("! Shutdown requested\n")
 		os.Exit(0)
 	}()
-
-	domains := strings.Split(*fDomains, ":")
 
 	err = dev.ConfigureResolver(domains, *fPort)
 	if err != nil {

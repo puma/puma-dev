@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 
 	"github.com/kardianos/osext"
@@ -164,7 +165,7 @@ func InstallIntoSystem(listenPort int) error {
 	return nil
 }
 
-func Uninstall() {
+func Uninstall(domains []string) {
 	plist := mustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 
 	// Unload a previous one if need be.
@@ -173,4 +174,9 @@ func Uninstall() {
 	os.Remove(plist)
 
 	fmt.Printf("* Removed puma-dev from automatically running\n")
+
+	for _, d := range domains {
+		os.Remove(filepath.Join("/etc/resolver", d))
+		fmt.Printf("* Removed domain '%s'\n", d)
+	}
 }
