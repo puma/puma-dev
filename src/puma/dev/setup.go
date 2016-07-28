@@ -84,24 +84,12 @@ func Cleanup() {
 }
 
 func InstallIntoSystem(listenPort int) error {
-	path, err := osext.Executable()
+	binPath, err := osext.Executable()
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(mustExpand("~/bin"), 0755)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("* Copying %s to ~/bin/puma-dev...\n", path)
-
-	binPath := mustExpand("~/bin/puma-dev")
-
-	err = exec.Command("cp", path, binPath).Run()
-	if err != nil {
-		return err
-	}
+	fmt.Printf("* Use '%s' as the location of puma-dev\n", binPath)
 
 	var userTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
