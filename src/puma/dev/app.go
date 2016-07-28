@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsevents"
 	"gopkg.in/tomb.v2"
 )
 
@@ -21,6 +22,8 @@ type App struct {
 	Name    string
 	Port    int
 	Command *exec.Cmd
+
+	dir string
 
 	t tomb.Tomb
 
@@ -34,6 +37,15 @@ type App struct {
 
 func (a *App) Address() string {
 	return fmt.Sprintf("localhost:%d", a.Port)
+}
+
+func (a *App) Kill() error {
+	fmt.Printf("! Killing '%s' (%d)\n", a.Name, a.Command.Process.Pid)
+	err := a.Command.Process.Kill()
+	if err != nil {
+		fmt.Printf("! Error trying to kill %s: %s", a.Name, err)
+	}
+	return err
 }
 
 func (a *App) watch() error {
@@ -61,13 +73,15 @@ func (a *App) watch() error {
 	case err = <-c:
 		err = ErrUnexpectedExit
 	case <-a.t.Dying():
-		a.Command.Process.Kill()
+		a.Kill()
 		err = nil
 	}
 
 	a.Command.Wait()
 	a.pool.remove(a)
 	a.listener.Close()
+
+	fmt.Printf("* App '%s' shutdown and cleaned up\n", a.Name)
 
 	return err
 }
@@ -80,7 +94,7 @@ func (a *App) idleMonitor() error {
 		select {
 		case <-ticker.C:
 			if a.pool.maybeIdle(a) {
-				a.Command.Process.Kill()
+				a.Kill()
 			}
 			return nil
 		case <-a.t.Dying():
@@ -89,6 +103,51 @@ func (a *App) idleMonitor() error {
 	}
 
 	return nil
+}
+
+func (a *App) restartMonitor() error {
+	tmpDir := filepath.Join(a.dir, "tmp")
+	err := os.MkdirAll(tmpDir, 0755)
+	if err != nil {
+		return err
+	}
+
+	restart := filepath.Join(tmpDir, "restart.txt")
+
+	f, err := os.Create(restart)
+	if err != nil {
+		return err
+	}
+	f.Close()
+
+	dev, err := fsevents.DeviceForPath(restart)
+	if err != nil {
+		return err
+	}
+
+	es := &fsevents.EventStream{
+		Paths:   []string{restart},
+		Latency: 500 * time.Millisecond,
+		Device:  dev,
+		Flags:   fsevents.FileEvents | fsevents.IgnoreSelf,
+	}
+
+	es.Start()
+
+	defer es.Stop()
+
+	for {
+		select {
+		case events := <-es.Events:
+			for _, ev := range events {
+				if ev.Flags&fsevents.ItemInodeMetaMod != 0 {
+					a.Kill()
+				}
+			}
+		case <-a.t.Dying():
+			return nil
+		}
+	}
 }
 
 func (a *App) UpdateUsed() {
@@ -144,10 +203,12 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 		Command:  cmd,
 		listener: l,
 		stdout:   stdout,
+		dir:      dir,
 	}
 
 	app.t.Go(app.watch)
 	app.t.Go(app.idleMonitor)
+	app.t.Go(app.restartMonitor)
 
 	return app, nil
 }
@@ -210,8 +271,6 @@ func (a *AppPool) App(name string) (*App, error) {
 func (a *AppPool) remove(app *App) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
-
-	fmt.Printf("! Shutdown app '%s'\n", app.Name)
 
 	delete(a.apps, app.Name)
 }

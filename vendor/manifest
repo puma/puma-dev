@@ -2,6 +2,12 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/fsnotify/fsevents",
+			"repository": "https://github.com/fsnotify/fsevents",
+			"revision": "8b9e69e6c151001d0eb8a7cf37583265dfc6d6e4",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/kardianos/osext",
 			"repository": "https://github.com/kardianos/osext",
 			"revision": "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc",
