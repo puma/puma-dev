@@ -78,6 +78,16 @@ func main() {
 		}
 	}()
 
+	stop := make(chan os.Signal, 1)
+
+	signal.Notify(stop, os.Interrupt)
+
+	go func() {
+		<-stop
+		fmt.Printf("! Shutdown requested\n")
+		os.Exit(0)
+	}()
+
 	domains := strings.Split(*fDomains, ":")
 
 	err = dev.ConfigureResolver(domains, *fPort)
