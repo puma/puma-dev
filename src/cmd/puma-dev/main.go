@@ -36,6 +36,11 @@ var (
 func main() {
 	flag.Parse()
 
+	if *fPow {
+		*fDomains = "dev"
+		*fDir = "~/.pow"
+	}
+
 	domains := strings.Split(*fDomains, ":")
 
 	if *fCleanup {
@@ -49,7 +54,7 @@ func main() {
 	}
 
 	if *fInstall {
-		err := dev.InstallIntoSystem(*fInstallPort)
+		err := dev.InstallIntoSystem(*fInstallPort, *fDir, *fDomains, (*fTimeout).String())
 		if err != nil {
 			log.Fatalf("Unable to install into system: %s", err)
 		}
@@ -62,11 +67,6 @@ func main() {
 			log.Fatalf("Unable to configure OS X resolver: %s", err)
 		}
 		return
-	}
-
-	if *fPow {
-		*fDomains = "dev"
-		*fDir = "~/.pow"
 	}
 
 	dir, err := homedir.Expand(*fDir)

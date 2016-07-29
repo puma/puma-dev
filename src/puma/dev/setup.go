@@ -83,7 +83,7 @@ func Cleanup() {
 	}
 }
 
-func InstallIntoSystem(listenPort int) error {
+func InstallIntoSystem(listenPort int, dir, domains, timeout string) error {
 	binPath, err := osext.Executable()
 	if err != nil {
 		return err
@@ -99,10 +99,14 @@ func InstallIntoSystem(listenPort int) error {
    <string>io.puma.dev</string>
    <key>ProgramArguments</key>
    <array>
-     <string>zsh</string>
-     <string>-l</string>
-     <string>-c</string>
-     <string>exec '%s' -launchd</string>
+     <string>%s</string>
+     <string>-launchd</string>
+     <string>-dir</string>
+     <string>%s</string>
+     <string>-d</string>
+     <string>%s</string>
+     <string>-timeout</string>
+     <string>%s</string>
    </array>
    <key>KeepAlive</key>
    <true/>
@@ -132,7 +136,7 @@ func InstallIntoSystem(listenPort int) error {
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, listenPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, domains, timeout, listenPort, logPath, logPath)),
 		0644,
 	)
 
