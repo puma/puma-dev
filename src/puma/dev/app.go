@@ -36,8 +36,6 @@ type App struct {
 
 	t tomb.Tomb
 
-	listener net.Listener
-
 	stdout  io.Reader
 	lock    sync.Mutex
 	pool    *AppPool
@@ -104,7 +102,10 @@ func (a *App) watch() error {
 
 	a.Command.Wait()
 	a.pool.remove(a)
-	a.listener.Close()
+
+	if a.Scheme == "httpu" {
+		os.Remove(a.Address())
+	}
 
 	fmt.Printf("* App '%s' shutdown and cleaned up\n", a.Name)
 
@@ -193,44 +194,35 @@ if test -e .powenv; then
 fi
 
 if test -e Gemfile; then
-	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b tcp://127.0.0.1:%d
+	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 fi
 
 
-exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b tcp://127.0.0.1:%d
+exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 `
 
 func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
-	// Create a listener socket and inject it
-	l, err := net.Listen("tcp", ":0")
+	tmpDir := filepath.Join(dir, "tmp")
+	err := os.MkdirAll(tmpDir, 0755)
 	if err != nil {
 		return nil, err
 	}
 
-	addr := l.Addr().(*net.TCPAddr)
+	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
 
 	shell := os.Getenv("SHELL")
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf(executionShell, name, addr.Port))
+		fmt.Sprintf(executionShell, name, socket, name, socket))
 
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("PUMA_INHERIT_0=3:tcp://127.0.0.1:%d", addr.Port),
 		fmt.Sprintf("THREADS=%d", DefaultThreads),
 		"WORKERS=0",
 		"CONFIG=-",
 	)
-
-	tcpListener := l.(*net.TCPListener)
-	socket, err := tcpListener.File()
-	if err != nil {
-		return nil, err
-	}
-
-	cmd.ExtraFiles = []*os.File{socket}
 
 	cmd.Stderr = os.Stderr
 
@@ -244,21 +236,33 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 		return nil, err
 	}
 
-	fmt.Printf("! Booted app '%s' on port %d\n", name, addr.Port)
+	fmt.Printf("! Booted app '%s' on socket %s\n", name, socket)
 
 	app := &App{
-		Name:     name,
-		Command:  cmd,
-		listener: l,
-		stdout:   stdout,
-		dir:      dir,
+		Name:    name,
+		Command: cmd,
+		stdout:  stdout,
+		dir:     dir,
+		pool:    pool,
 	}
 
-	app.SetAddress("http", "127.0.0.1", addr.Port)
+	app.SetAddress("httpu", socket, 0)
 
 	app.t.Go(app.watch)
 	app.t.Go(app.idleMonitor)
 	app.t.Go(app.restartMonitor)
+
+	// This is a poor substitute for getting an actual readiness signal
+	// from puma but it's good enough.
+	for {
+		c, err := net.Dial("unix", socket)
+		if err == nil {
+			c.Close()
+			break
+		}
+
+		time.Sleep(250 * time.Microsecond)
+	}
 
 	return app, nil
 }
@@ -370,13 +374,20 @@ func (a *AppPool) remove(app *App) {
 
 func (a *AppPool) Purge() {
 	a.lock.Lock()
-	defer a.lock.Unlock()
+
+	var apps []*App
 
 	for _, app := range a.apps {
+		apps = append(apps, app)
+	}
+
+	a.lock.Unlock()
+
+	for _, app := range apps {
 		app.t.Kill(nil)
 	}
 
-	for _, app := range a.apps {
+	for _, app := range apps {
 		app.t.Wait()
 	}
 }

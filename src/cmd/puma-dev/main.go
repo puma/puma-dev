@@ -96,11 +96,12 @@ func main() {
 
 	stop := make(chan os.Signal, 1)
 
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	go func() {
 		<-stop
 		fmt.Printf("! Shutdown requested\n")
+		pool.Purge()
 		os.Exit(0)
 	}()
 
@@ -138,5 +139,8 @@ func main() {
 
 	fmt.Printf("! Puma dev listening\n")
 
-	http.Serve(socketName)
+	err = http.Serve(socketName)
+	if err != nil {
+		log.Fatalf("Error listening: %s", err)
+	}
 }

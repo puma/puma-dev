@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"puma/dev/launch"
+	"puma/httpu"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func (h *HTTPServer) director(req *http.Request) {
 }
 
 func (h *HTTPServer) Serve(launchdSocket string) error {
-	transport := &http.Transport{
+	transport := &httpu.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
