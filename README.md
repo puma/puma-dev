@@ -43,7 +43,7 @@ If you wish to have `puma-dev` use a port other than 80, pass it via the `-insta
 
 Run: `puma-dev`
 
-Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s test /path/to/my/app`. You can now access your app as `test.pdev`.
+Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s /path/to/my/app test`. You can now access your app as `test.pdev`.
 
 Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
