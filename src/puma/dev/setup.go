@@ -83,7 +83,12 @@ func Cleanup() {
 	}
 }
 
-func InstallIntoSystem(listenPort int, dir, domains, timeout string) error {
+func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) error {
+	err := SetupOurCert()
+	if err != nil {
+		return err
+	}
+
 	binPath, err := osext.Executable()
 	if err != nil {
 		return err
@@ -121,6 +126,13 @@ func InstallIntoSystem(listenPort int, dir, domains, timeout string) error {
            <key>SockServiceName</key>
            <string>%d</string>
        </dict>
+       <key>SocketTLS</key>
+       <dict>
+           <key>SockNodeName</key>
+           <string>0.0.0.0</string>
+           <key>SockServiceName</key>
+           <string>%d</string>
+       </dict>
    </dict>
    <key>StandardOutPath</key>
    <string>%s</string>
@@ -136,7 +148,7 @@ func InstallIntoSystem(listenPort int, dir, domains, timeout string) error {
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, dir, domains, timeout, listenPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, domains, timeout, listenPort, tlsPort, logPath, logPath)),
 		0644,
 	)
 
@@ -152,7 +164,7 @@ func InstallIntoSystem(listenPort int, dir, domains, timeout string) error {
 		return err
 	}
 
-	fmt.Printf("* Installed puma-dev on port %d\n", listenPort)
+	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", listenPort, tlsPort)
 
 	return nil
 }
