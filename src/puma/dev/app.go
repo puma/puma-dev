@@ -181,6 +181,10 @@ func (a *App) UpdateUsed() {
 }
 
 const executionShell = `# puma-dev generated at runtime
+if test -e ~/.powconfig; then
+	source ~/.powconfig
+fi
+
 if test -e .env; then
 	source .env
 fi
