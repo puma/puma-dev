@@ -12,11 +12,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"puma/watch"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsevents"
 	"gopkg.in/tomb.v2"
 )
 
@@ -146,34 +146,9 @@ func (a *App) restartMonitor() error {
 	}
 	f.Close()
 
-	dev, err := fsevents.DeviceForPath(restart)
-	if err != nil {
-		return err
-	}
-
-	es := &fsevents.EventStream{
-		Paths:   []string{restart},
-		Latency: 500 * time.Millisecond,
-		Device:  dev,
-		Flags:   fsevents.FileEvents | fsevents.IgnoreSelf,
-	}
-
-	es.Start()
-
-	defer es.Stop()
-
-	for {
-		select {
-		case events := <-es.Events:
-			for _, ev := range events {
-				if ev.Flags&fsevents.ItemInodeMetaMod != 0 {
-					a.Kill()
-				}
-			}
-		case <-a.t.Dying():
-			return nil
-		}
-	}
+	return watch.Watch(restart, a.t.Dying(), func() {
+		a.Kill()
+	})
 }
 
 func (a *App) UpdateUsed() {

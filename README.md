@@ -1,4 +1,4 @@
-# Puma-dev: A development server for OS X
+# Puma-dev: A development server for OS X and Linux
 
 Puma-dev is the emotional successor to pow. It provides a quick and easy way to manage apps in development on OS X.
 
@@ -102,6 +102,26 @@ Puma-dev automatically makes the apps available via SSL as well. When you first 
 That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simply generate new ones.
 
 When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
+
+## Linux
+
+Puma-dev supports linux but requires additional installation to make all the features work.
+
+### .dev domain
+
+Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make domains resolve.
+
+### Port 80/443 binding
+
+There are 2 options to allow puma-dev to listen on port 80 and 443.
+
+1. `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
+2. Use `authbind`.
+
+You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
+
+There is a shortcut for binding to 80/443 by passing `-sysbind` which overrides `-http-port` and `-https-port`.
+
 
 ## Development
 

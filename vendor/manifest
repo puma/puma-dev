@@ -32,6 +32,13 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "golang.org/x/exp/inotify",
+			"repository": "https://go.googlesource.com/exp",
+			"revision": "fac9e6d4e3a4bd9d3dd6f47b3c79027a6b64dd0a",
+			"branch": "master",
+			"path": "/inotify"
+		},
+		{
 			"importpath": "gopkg.in/tomb.v2",
 			"repository": "https://gopkg.in/tomb.v2",
 			"revision": "14b3d72120e8d10ea6e6b7f87f7175734b1faab8",
