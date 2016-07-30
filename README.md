@@ -5,7 +5,7 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 ## Highlights
 
 * Easy startup and idle shutdown of rack/rails apps
-* Easy access to the apps using the `.pdev` subdomain **(configurable)**
+* Easy access to the apps using the `.dev` subdomain **(configurable)**
 
 ### Why not just use pow?
 
@@ -15,6 +15,9 @@ Pow doesn't support rack.hijack and thus not websockets and thus not actioncable
 
 * Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
 * Or download the latest release from https://github.com/puma/puma-dev/releases
+* If you haven't run puma-dev before, run: `sudo puma-dev -setup` to configure some DNS settings that have to be done as root
+* Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
+  * If you're currently using pow, puma-dev taking control of `.dev` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
 
 ### Options
 
@@ -48,13 +51,13 @@ If you wish to have `puma-dev` use a port other than 80, pass it via the `-insta
 
 Run: `puma-dev`
 
-Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s /path/to/my/app test`. You can now access your app as `test.pdev`.
+Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s /path/to/my/app test`. You can now access your app as `test.dev`.
 
 Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
 ### Coming from Pow
 
-By default, puma-dev uses the domain `.pdev` to manage your apps, so that it doesn't interfer with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
+By default, puma-dev uses the domain `.dev` to manage your apps, so that it doesn't interfer with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
 
 ### Configuration
 
@@ -88,7 +91,7 @@ Simple symlink your apps directory into `~/.puma-dev`! That's it!
 
 Puma-dev can also proxy requests from a nice dev domain to another app. To do so, simple write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
 
-For example, to have port 9292 show up as `awesome.pdev`: `echo 9292 > ~/.puma-dev/awesome`.
+For example, to have port 9292 show up as `awesome.dev`: `echo 9292 > ~/.puma-dev/awesome`.
 
 Or to proxy to another host: `echo 10.3.1.2:9292 > ~/.puma-dev/awesome-elsewhere`.
 
@@ -98,7 +101,7 @@ Puma-dev automatically makes the apps available via SSL as well. When you first 
 
 That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simple generate new ones.
 
-When `-install` is used (and let's be honest, that's how you want to be using puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.pdev` to access your app via https.
+When `-install` is used (and let's be honest, that's how you want to be using puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
 
 ## Development
 
