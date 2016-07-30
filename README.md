@@ -29,7 +29,7 @@ You have the ability to configure most of the values that you'll use day-to-day.
 
 Run: `sudo puma-dev -setup`.
 
-This will configure the bits that require root access, which is allowing your user access to the `/etc/resolver` directory.
+This configures the bits that require root access, which allows your user access to the `/etc/resolver` directory.
 
 ### Coming from v0.2
 
@@ -57,17 +57,17 @@ Running `puma-dev` in this way will require you to use the listed http port, whi
 
 ### Coming from Pow
 
-By default, puma-dev uses the domain `.dev` to manage your apps, so that it doesn't interfer with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
+By default, puma-dev uses the domain `.dev` to manage your apps, so that it doesn't interfere with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
 
 ### Configuration
 
-Puma-dev supports loading shell into the environment before puma starts. It checks for the following files in this order:
+Puma-dev supports loading environment variables before puma starts. It checks for the following files in this order:
 
 * `.env`
 * `.powrc`
 * `.powenv`
 
-Additionally, puma-dev uses a few environment variables control how puma is started that you can overwrite in your loaded shell config.
+Additionally, puma-dev uses a few environment variables to control how puma is started that you can overwrite in your loaded shell config.
 
 * `CONFIG`: A puma configuration file to load, usually something like `config/puma-dev.rb`. Defaults to no config.
 * `THREADS`: How many threads puma should use concurrently. Defaults to 5.
@@ -85,11 +85,11 @@ Run: `puma-dev -uninstall`
 
 ## App usage
 
-Simple symlink your apps directory into `~/.puma-dev`! That's it!
+Simply symlink your apps directory into `~/.puma-dev`! That's it!
 
 ### Proxy support
 
-Puma-dev can also proxy requests from a nice dev domain to another app. To do so, simple write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
+Puma-dev can also proxy requests from a nice dev domain to another app. To do so, just write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
 
 For example, to have port 9292 show up as `awesome.dev`: `echo 9292 > ~/.puma-dev/awesome`.
 
@@ -97,11 +97,11 @@ Or to proxy to another host: `echo 10.3.1.2:9292 > ~/.puma-dev/awesome-elsewhere
 
 ### HTTPS
 
-Puma-dev automatically makes the apps available via SSL as well. When you first ran puma-dev, it will have likely caused a dialog to appear to put in your password. What happened there was puma-dev generates it's own CA certification that is stored in `~/Library/Application Support/io.puma.dev/cert.pem`.
+Puma-dev automatically makes the apps available via SSL as well. When you first run puma-dev, it will have likely caused a dialog to appear to put in your password. What happened there was puma-dev generates it's own CA certification that is stored in `~/Library/Application Support/io.puma.dev/cert.pem`.
 
-That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simple generate new ones.
+That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simply generate new ones.
 
-When `-install` is used (and let's be honest, that's how you want to be using puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
+When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
 
 ## Development
 
@@ -112,5 +112,5 @@ To build puma-dev, follow these steps:
 * Run `make`
 * Run `bin/puma-dev` to use your new binary
 
-Puma-dev use gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
+Puma-dev uses gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
 
