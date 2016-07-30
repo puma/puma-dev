@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/golang-lru"
 )
 
 var CACert *tls.Certificate
@@ -62,12 +64,17 @@ func SetupOurCert() error {
 
 type certCache struct {
 	lock  sync.Mutex
-	cache map[string]*tls.Certificate
+	cache *lru.ARCCache
 }
 
 func NewCertCache() *certCache {
+	cache, err := lru.NewARC(1024)
+	if err != nil {
+		panic(err)
+	}
+
 	return &certCache{
-		cache: make(map[string]*tls.Certificate),
+		cache: cache,
 	}
 }
 
@@ -77,8 +84,8 @@ func (c *certCache) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 
 	name := clientHello.ServerName
 
-	if cert, ok := c.cache[name]; ok {
-		return cert, nil
+	if val, ok := c.cache.Get(name); ok {
+		return val.(*tls.Certificate), nil
 	}
 
 	cert, err := makeCert(CACert, name)
@@ -86,7 +93,7 @@ func (c *certCache) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 		return nil, err
 	}
 
-	c.cache[name] = cert
+	c.cache.Add(name, cert)
 
 	return cert, nil
 }
