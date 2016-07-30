@@ -87,6 +87,14 @@ For example, to have port 9292 show up as `awesome.pdev`: `echo 9292 > ~/.puma-d
 
 Or to proxy to another host: `echo 10.3.1.2:9292 > ~/.puma-dev/awesome-elsewhere`.
 
+### HTTPS
+
+Puma-dev automatically makes the apps available via SSL as well. When you first ran puma-dev, it will have likely caused a dialog to appear to put in your password. What happened there was puma-dev generates it's own CA certification that is stored in `~/Library/Application Support/io.puma.dev/cert.pem`.
+
+That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simple generate new ones.
+
+When `-install` is used (and let's be honest, that's how you want to be using puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.pdev` to access your app via https.
+
 ## Development
 
 To build puma-dev, follow these steps:
