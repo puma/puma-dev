@@ -121,8 +121,8 @@ func (a *App) idleMonitor() error {
 		case <-ticker.C:
 			if a.pool.maybeIdle(a) {
 				a.Kill()
+				return nil
 			}
-			return nil
 		case <-a.t.Dying():
 			return nil
 		}
