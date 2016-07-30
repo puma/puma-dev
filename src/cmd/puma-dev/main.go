@@ -141,6 +141,8 @@ func main() {
 	http.TLSAddress = fmt.Sprintf("127.0.0.1:%d", *fTLSPort)
 	http.Pool = &pool
 
+	http.Setup()
+
 	var (
 		socketName    string
 		tlsSocketName string

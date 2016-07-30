@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"puma/dev/launch"
 	"puma/httpu"
+	"puma/httputil"
 	"strings"
 	"time"
 
@@ -18,7 +18,18 @@ type HTTPServer struct {
 	TLSAddress string
 	Pool       *AppPool
 
-	proxy *httputil.ReverseProxy
+	transport *httpu.Transport
+}
+
+func (h *HTTPServer) Setup() {
+	h.transport = &httpu.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
 }
 
 func (h *HTTPServer) hostForApp(name string) (string, string) {
@@ -39,22 +50,12 @@ func (h *HTTPServer) director(req *http.Request) {
 }
 
 func (h *HTTPServer) ServeTLS(launchdSocket string) error {
-	transport := &httpu.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+	proxy := &httputil.ReverseProxy{
+		ForwardProto:  "https",
+		Director:      h.director,
+		Transport:     h.transport,
+		FlushInterval: 1 * time.Second,
 	}
-
-	h.proxy = &httputil.ReverseProxy{
-		Director:  h.director,
-		Transport: transport,
-	}
-
-	h.proxy.FlushInterval = 1 * time.Second
-	h.proxy.Transport = transport
 
 	certCache := NewCertCache()
 
@@ -64,7 +65,7 @@ func (h *HTTPServer) ServeTLS(launchdSocket string) error {
 
 	serv := http.Server{
 		Addr:      h.TLSAddress,
-		Handler:   h.proxy,
+		Handler:   proxy,
 		TLSConfig: tlsConfig,
 	}
 
@@ -95,26 +96,15 @@ func (h *HTTPServer) ServeTLS(launchdSocket string) error {
 }
 
 func (h *HTTPServer) Serve(launchdSocket string) error {
-	transport := &httpu.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+	proxy := &httputil.ReverseProxy{
+		Director:      h.director,
+		Transport:     h.transport,
+		FlushInterval: 1 * time.Second,
 	}
-
-	h.proxy = &httputil.ReverseProxy{
-		Director:  h.director,
-		Transport: transport,
-	}
-
-	h.proxy.FlushInterval = 1 * time.Second
-	h.proxy.Transport = transport
 
 	serv := http.Server{
 		Addr:    h.Address,
-		Handler: h.proxy,
+		Handler: proxy,
 	}
 
 	if launchdSocket == "" {
