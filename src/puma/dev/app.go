@@ -292,6 +292,8 @@ func (a *AppPool) maybeIdle(app *App) bool {
 	return false
 }
 
+var ErrUnknownApp = errors.New("unknown app")
+
 func (a *AppPool) App(name string) (*App, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -310,7 +312,7 @@ func (a *AppPool) App(name string) (*App, error) {
 
 	stat, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("Unknown app: %s", name)
+		return nil, ErrUnknownApp
 	}
 
 	if stat.IsDir() {

@@ -32,7 +32,7 @@ type ReverseProxy struct {
 	// the request into a new request to be sent
 	// using Transport. Its response is then copied
 	// back to the original client unmodified.
-	Director func(*http.Request)
+	Director func(*http.Request) error
 
 	// The transport used to perform proxy requests.
 	// If nil, http.DefaultTransport is used.
@@ -84,7 +84,7 @@ func singleJoiningSlash(a, b string) string {
 // Director policy.
 func NewSingleHostReverseProxy(target *url.URL) *ReverseProxy {
 	targetQuery := target.RawQuery
-	director := func(req *http.Request) {
+	director := func(req *http.Request) error {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
@@ -93,6 +93,8 @@ func NewSingleHostReverseProxy(target *url.URL) *ReverseProxy {
 		} else {
 			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
 		}
+
+		return nil
 	}
 	return &ReverseProxy{Director: director}
 }
@@ -177,7 +179,13 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	p.Director(outreq)
+	err := p.Director(outreq)
+	if err != nil {
+		rw.WriteHeader(500)
+		rw.Write([]byte(err.Error()))
+		return
+	}
+
 	outreq.Proto = "HTTP/1.1"
 	outreq.ProtoMajor = 1
 	outreq.ProtoMinor = 1
