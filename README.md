@@ -103,6 +103,12 @@ That CA cert is used to dynamically create certificates for your apps when acces
 
 When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
 
+### OS X Logging
+
+When puma-dev is installed as a user agent (the default mode), it will log output from itself and the apps to `~/Library/Logs/puma-dev.log`. You can refer to there to find out if apps have started and look for errors.
+
+In the future, puma-dev will provide an integrated console for this log output.
+
 ## Linux
 
 Puma-dev supports linux but requires additional installation to make all the features work.
