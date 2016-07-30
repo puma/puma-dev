@@ -11,6 +11,11 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole.
 
+## Install
+
+* Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
+* Or download the latest release from https://github.com/puma/puma-dev/releases
+
 ### Options
 
 Run: `puma-dev -h`
