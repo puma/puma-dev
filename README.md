@@ -57,7 +57,7 @@ Running `puma-dev` in this way will require you to use the listed http port, whi
 
 ### Coming from Pow
 
-By default, puma-dev uses the domain `.dev` to manage your apps, so that it doesn't interfere with a pow installation. If you want to have puma-dev take over for pow entirely, just run `puma-dev -pow`. Puma-dev will now use the `.dev` domain and look for apps in `~/.pow`.
+By default, puma-dev uses the domain `.dev` to manage your apps. If you want to have puma-dev look for apps in `~/.pow`, just run `puma-dev -pow`.
 
 ### Configuration
 
@@ -113,4 +113,3 @@ To build puma-dev, follow these steps:
 * Run `bin/puma-dev` to use your new binary
 
 Puma-dev uses gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
-
