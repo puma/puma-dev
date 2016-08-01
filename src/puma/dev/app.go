@@ -240,7 +240,7 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 			break
 		}
 
-		time.Sleep(250 * time.Microsecond)
+		time.Sleep(250 * time.Millisecond)
 	}
 
 	return app, nil
