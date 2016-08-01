@@ -155,7 +155,7 @@ func (a *App) UpdateUsed() {
 	a.lastUse = time.Now()
 }
 
-const executionShell = `# puma-dev generated at runtime
+const executionShell = `exec bash -c '
 if test -e ~/.powconfig; then
 	source ~/.powconfig
 fi
@@ -177,7 +177,7 @@ if test -e Gemfile; then
 fi
 
 
-exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
+exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 `
 
 func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
