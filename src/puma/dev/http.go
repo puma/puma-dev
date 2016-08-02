@@ -62,7 +62,13 @@ func (h *HTTPServer) hostForApp(name string) (string, string, error) {
 
 func (h *HTTPServer) director(req *http.Request) error {
 	dot := strings.LastIndexByte(req.Host, '.')
-	name := req.Host[:dot]
+
+	var name string
+	if dot == -1 {
+		name = req.Host
+	} else {
+		name = req.Host[:dot]
+	}
 
 	var err error
 	req.URL.Scheme, req.URL.Host, err = h.hostForApp(name)
