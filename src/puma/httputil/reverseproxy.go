@@ -7,6 +7,8 @@
 package httputil
 
 import (
+	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -25,9 +27,6 @@ var onExitFlushLoop func()
 // sends it to another server, proxying the response back to the
 // client.
 type ReverseProxy struct {
-	// Value to inject as X-Forwarded-Proto
-	ForwardProto string
-
 	// Director must be a function which modifies
 	// the request into a new request to be sent
 	// using Transport. Its response is then copied
@@ -54,6 +53,9 @@ type ReverseProxy struct {
 	// get byte slices for use by io.CopyBuffer when
 	// copying HTTP response bodies.
 	BufferPool BufferPool
+
+	// Output additional debug logging
+	Debug bool
 }
 
 // A BufferPool is an interface for getting and returning temporary
@@ -151,34 +153,6 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	outreq := new(http.Request)
 	*outreq = *req // includes shallow copies of maps, but okay
 
-	if closeNotifier, ok := rw.(http.CloseNotifier); ok {
-		if requestCanceler, ok := transport.(requestCanceler); ok {
-			reqDone := make(chan struct{})
-			defer close(reqDone)
-
-			clientGone := closeNotifier.CloseNotify()
-
-			outreq.Body = struct {
-				io.Reader
-				io.Closer
-			}{
-				Reader: &runOnFirstRead{
-					Reader: outreq.Body,
-					fn: func() {
-						go func() {
-							select {
-							case <-clientGone:
-								requestCanceler.CancelRequest(outreq)
-							case <-reqDone:
-							}
-						}()
-					},
-				},
-				Closer: outreq.Body,
-			}
-		}
-	}
-
 	err := p.Director(outreq)
 	if err != nil {
 		rw.WriteHeader(500)
@@ -218,8 +192,44 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		outreq.Header.Set("X-Forwarded-For", clientIP)
 	}
 
-	if p.ForwardProto != "" {
-		outreq.Header.Set("X-Forwarded-Proto", p.ForwardProto)
+	if req.TLS != nil {
+		outreq.Header.Set("X-Forwarded-Proto", "https")
+	} else {
+		outreq.Header.Set("X-Forwarded-Proto", "http")
+	}
+
+	if req.Header.Get("Connection") == "Upgrade" &&
+		req.Header.Get("Upgrade") == "websocket" {
+		p.websocketProxy(rw, outreq)
+		return
+	}
+
+	if closeNotifier, ok := rw.(http.CloseNotifier); ok {
+		if requestCanceler, ok := transport.(requestCanceler); ok {
+			reqDone := make(chan struct{})
+			defer close(reqDone)
+
+			clientGone := closeNotifier.CloseNotify()
+
+			outreq.Body = struct {
+				io.Reader
+				io.Closer
+			}{
+				Reader: &runOnFirstRead{
+					Reader: outreq.Body,
+					fn: func() {
+						go func() {
+							select {
+							case <-clientGone:
+								requestCanceler.CancelRequest(outreq)
+							case <-reqDone:
+							}
+						}()
+					},
+				},
+				Closer: outreq.Body,
+			}
+		}
 	}
 
 	res, err := transport.RoundTrip(outreq)
@@ -257,6 +267,76 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	p.copyResponse(rw, res.Body)
 	res.Body.Close() // close now, instead of defer, to populate res.Trailer
 	copyHeader(rw.Header(), res.Trailer)
+}
+
+func (p *ReverseProxy) websocketProxy(w http.ResponseWriter, r *http.Request) {
+	if p.Debug {
+		p.logf("http: websockets detected, using direct proxy")
+	}
+
+	var (
+		conn net.Conn
+		err  error
+	)
+
+	r.Header.Set("Connection", "Upgrade")
+	r.Header.Set("Upgrade", "websocket")
+
+	switch r.URL.Scheme {
+	case "httpu":
+		conn, err = net.Dial("unix", r.URL.Host)
+	case "http":
+		conn, err = net.Dial("tcp", r.URL.Host)
+	case "https":
+		conn, err = tls.Dial("tcp", r.URL.Host, nil)
+	default:
+		err = fmt.Errorf("Unsupport scheme: %s", r.URL.Scheme)
+	}
+
+	if err != nil {
+		http.Error(w, "Error contacting backend server", 500)
+		log.Printf("Error dialing websocket backend %s: %v", r.URL, err)
+		return
+	}
+
+	defer conn.Close()
+
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "Not a hijacker?", 500)
+		return
+	}
+
+	nc, buf, err := hj.Hijack()
+	if err != nil {
+		log.Printf("Hijack error: %v", err)
+		return
+	}
+
+	buf.Flush()
+
+	defer nc.Close()
+
+	err = r.Write(conn)
+	if err != nil {
+		log.Printf("Error copying request to target: %v", err)
+		return
+	}
+
+	errc := make(chan error, 2)
+	cp := func(dst io.Writer, src io.Reader) {
+		_, err := io.Copy(dst, src)
+		errc <- err
+	}
+
+	go cp(conn, nc)
+	go cp(nc, conn)
+
+	if p.Debug {
+		p.logf("http/websocket: closing connection to %s", nc.RemoteAddr())
+	}
+
+	<-errc
 }
 
 func (p *ReverseProxy) copyResponse(dst io.Writer, src io.Reader) {

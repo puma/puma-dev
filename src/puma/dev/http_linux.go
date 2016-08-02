@@ -9,10 +9,10 @@ import (
 
 func (h *HTTPServer) ServeTLS() error {
 	proxy := &httputil.ReverseProxy{
-		ForwardProto:  "https",
 		Director:      h.director,
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
+		Debug:         h.Debug,
 	}
 
 	certCache := NewCertCache()
@@ -35,6 +35,7 @@ func (h *HTTPServer) Serve() error {
 		Director:      h.director,
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
+		Debug:         h.Debug,
 	}
 
 	serv := http.Server{

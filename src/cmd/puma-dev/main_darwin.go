@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	fDebug    = flag.Bool("debug", false, "enable debug output")
 	fDomains  = flag.String("d", "dev", "domains to handle, separate with :")
 	fPort     = flag.Int("dns-port", 9253, "port to listen on dns for")
 	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
@@ -140,6 +141,7 @@ func main() {
 	http.Address = fmt.Sprintf("127.0.0.1:%d", *fHTTPPort)
 	http.TLSAddress = fmt.Sprintf("127.0.0.1:%d", *fTLSPort)
 	http.Pool = &pool
+	http.Debug = *fDebug
 
 	http.Setup()
 

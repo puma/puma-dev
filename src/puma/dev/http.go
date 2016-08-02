@@ -12,6 +12,7 @@ type HTTPServer struct {
 	Address    string
 	TLSAddress string
 	Pool       *AppPool
+	Debug      bool
 
 	transport *httpu.Transport
 }
