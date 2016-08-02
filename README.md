@@ -109,6 +109,16 @@ When puma-dev is installed as a user agent (the default mode), it will log outpu
 
 In the future, puma-dev will provide an integrated console for this log output.
 
+### Websockets
+
+Puma-dev supports websockets natively but you may need to tell your web framework to allow the connections.
+
+In the case of rails, you need to configure rails to allow all websockets or websocket requests from certain domains. The quickest way is to add `config.action_cable.disable_request_forgery_protection = true` to `config/environments/development.rb`. This will allow all websocket connections while in development.
+
+*Do not use disable_request_forgery_protection in production!*
+
+Or you can add do something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
+
 ## Linux
 
 Puma-dev supports linux but requires additional installation to make all the features work.
