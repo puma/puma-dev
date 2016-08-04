@@ -20,6 +20,20 @@ func ConfigureResolver(domains []string, port int) error {
 
 	for _, domain := range domains {
 		path := filepath.Join(etcDir, domain)
+
+		// Check whether there's any old resolver in place and try to remove it
+        	_, errOnFileCheck := os.Stat(path)
+
+        	if errOnFileCheck != nil {
+                	return errOnFileCheck
+        	} else {
+                	// Try to remove old resolver entries that were left by pow
+                	err := os.Remove(path)
+                	if err != nil {
+                	        return err
+        	        }
+	        }
+
 		err := ioutil.WriteFile(path, []byte(body), 0644)
 		if err != nil {
 			return err
