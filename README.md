@@ -117,7 +117,7 @@ In the case of rails, you need to configure rails to allow all websockets or web
 
 *Do not use disable_request_forgery_protection in production!*
 
-Or you can add do something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
+Or you can add something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
 
 ## Linux
 
