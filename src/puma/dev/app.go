@@ -37,9 +37,14 @@ type App struct {
 	t tomb.Tomb
 
 	stdout  io.Reader
-	lock    sync.Mutex
 	pool    *AppPool
 	lastUse time.Time
+
+	lock sync.Mutex
+
+	booting bool
+
+	readyChan chan struct{}
 }
 
 func (a *App) SetAddress(scheme, host string, port int) {
@@ -96,10 +101,10 @@ func (a *App) watch() error {
 	case err = <-c:
 		err = ErrUnexpectedExit
 	case <-a.t.Dying():
-		a.Kill()
 		err = nil
 	}
 
+	a.Kill()
 	a.Command.Wait()
 	a.pool.remove(a)
 
@@ -151,8 +156,43 @@ func (a *App) restartMonitor() error {
 	})
 }
 
-func (a *App) UpdateUsed() {
-	a.lastUse = time.Now()
+func (a *App) WaitTilReady() error {
+	select {
+	case <-a.readyChan:
+		// double check we aren't also dying
+		select {
+		case <-a.t.Dying():
+			return a.t.Err()
+		default:
+			a.lastUse = time.Now()
+			return nil
+		}
+	case <-a.t.Dying():
+		return a.t.Err()
+	}
+}
+
+const (
+	Booting = iota
+	Running
+	Dead
+)
+
+func (a *App) Status() int {
+	// These are done in order as separate selects because go's
+	// select does not execute case's sequentially, it runs bodies
+	// after sampling all channels and picking a random body.
+	select {
+	case <-a.t.Dying():
+		return Dead
+	default:
+		select {
+		case <-a.readyChan:
+			return Running
+		default:
+			return Dead
+		}
+	}
 }
 
 const executionShell = `exec bash -c '
@@ -180,7 +220,7 @@ fi
 exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 `
 
-func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
+func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	tmpDir := filepath.Join(dir, "tmp")
 	err := os.MkdirAll(tmpDir, 0755)
 	if err != nil {
@@ -210,19 +250,22 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 		return nil, err
 	}
 
+	cmd.Stderr = cmd.Stdout
+
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("! Booted app '%s' on socket %s\n", name, socket)
+	fmt.Printf("! Booting app '%s' on socket %s\n", name, socket)
 
 	app := &App{
-		Name:    name,
-		Command: cmd,
-		stdout:  stdout,
-		dir:     dir,
-		pool:    pool,
+		Name:      name,
+		Command:   cmd,
+		stdout:    stdout,
+		dir:       dir,
+		pool:      pool,
+		readyChan: make(chan struct{}),
 	}
 
 	app.SetAddress("httpu", socket, 0)
@@ -231,17 +274,77 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 	app.t.Go(app.idleMonitor)
 	app.t.Go(app.restartMonitor)
 
-	// This is a poor substitute for getting an actual readiness signal
-	// from puma but it's good enough.
-	for {
-		c, err := net.Dial("unix", socket)
-		if err == nil {
-			c.Close()
-			break
+	app.t.Go(func() error {
+		// This is a poor substitute for getting an actual readiness signal
+		// from puma but it's good enough.
+
+		ticker := time.NewTicker(250 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-app.t.Dying():
+				fmt.Printf("! Detecting app '%s' dying on start\n", name)
+				return fmt.Errorf("app died before booting")
+			case <-ticker.C:
+				c, err := net.Dial("unix", socket)
+				if err == nil {
+					c.Close()
+					fmt.Printf("! App '%s' booted\n", name)
+					close(app.readyChan)
+					return nil
+				}
+			}
+		}
+	})
+
+	return app, nil
+}
+
+func (pool *AppPool) readProxy(name, path string) (*App, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	app := &App{
+		Name:      name,
+		pool:      pool,
+		readyChan: make(chan struct{}),
+	}
+
+	data = bytes.TrimSpace(data)
+
+	port, err := strconv.Atoi(string(data))
+	if err == nil {
+		app.SetAddress("http", "127.0.0.1", port)
+	} else {
+		u, err := url.Parse(string(data))
+		if err != nil {
+			return nil, err
 		}
 
-		time.Sleep(250 * time.Millisecond)
+		var (
+			sport, host string
+			port        int
+		)
+
+		host, sport, err = net.SplitHostPort(u.Host)
+		if err == nil {
+			port, err = strconv.Atoi(sport)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			host = u.Host
+		}
+
+		app.SetAddress(u.Scheme, host, port)
 	}
+
+	fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
+		name, app.Scheme, app.Address())
+
+	close(app.readyChan)
 
 	return app, nil
 }
@@ -249,6 +352,9 @@ func LaunchApp(pool *AppPool, name, dir string) (*App, error) {
 type AppPool struct {
 	Dir      string
 	IdleTime time.Duration
+	Debug    bool
+
+	AppClosed func(*App)
 
 	lock sync.Mutex
 	apps map[string]*App
@@ -279,7 +385,6 @@ func (a *AppPool) App(name string) (*App, error) {
 
 	app, ok := a.apps[name]
 	if ok {
-		app.UpdateUsed()
 		return app, nil
 	}
 
@@ -291,56 +396,15 @@ func (a *AppPool) App(name string) (*App, error) {
 	}
 
 	if stat.IsDir() {
-		app, err = LaunchApp(a, name, path)
-		if err != nil {
-			return nil, err
-		}
+		app, err = a.LaunchApp(name, path)
 	} else {
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-
-		app = &App{
-			Name: name,
-		}
-
-		data = bytes.TrimSpace(data)
-
-		port, err := strconv.Atoi(string(data))
-		if err == nil {
-			app.SetAddress("http", "127.0.0.1", port)
-		} else {
-			u, err := url.Parse(string(data))
-			if err != nil {
-				return nil, err
-			}
-
-			var (
-				sport, host string
-				port        int
-			)
-
-			host, sport, err = net.SplitHostPort(u.Host)
-			if err == nil {
-				port, err = strconv.Atoi(sport)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				host = u.Host
-			}
-
-			app.SetAddress(u.Scheme, host, port)
-		}
-
-		fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
-			name, app.Scheme, app.Address())
+		app, err = a.readProxy(name, path)
 	}
 
-	app.pool = a
+	if err != nil {
+		return nil, err
+	}
 
-	app.UpdateUsed()
 	a.apps[name] = app
 
 	return app, nil
@@ -351,6 +415,10 @@ func (a *AppPool) remove(app *App) {
 	defer a.lock.Unlock()
 
 	delete(a.apps, app.Name)
+
+	if a.AppClosed != nil {
+		a.AppClosed(app)
+	}
 }
 
 func (a *AppPool) Purge() {
