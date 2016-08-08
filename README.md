@@ -19,13 +19,33 @@ Pow doesn't support rack.hijack and thus not websockets and thus not actioncable
 * Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
   * If you're currently using pow, puma-dev taking control of `.dev` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
 
+### Install on Linux
+
+* Puma-dev supports linux but requires additional installation to make all the features work.
+* You can either build from source or download a binary from https://github.com/puma/puma-dev/releases
+
+#### .dev domain
+
+Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make domains resolve.
+
+#### Port 80/443 binding
+
+There are 2 options to allow puma-dev to listen on port 80 and 443.
+
+1. `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
+2. Use `authbind`.
+
+You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
+
+There is a shortcut for binding to 80/443 by passing `-sysbind` which overrides `-http-port` and `-https-port`.
+
 ### Options
 
 Run: `puma-dev -h`
 
 You have the ability to configure most of the values that you'll use day-to-day.
 
-### Setup
+### Setup (OS X only)
 
 Run: `sudo puma-dev -setup`.
 
@@ -37,7 +57,7 @@ Puma-dev v0.3 and later use launchd to access privileged ports, so if you instal
 
 Run: `sudo puma-dev -cleanup`
 
-### Background Install/Upgrading for port 80 access
+### Background Install/Upgrading for port 80 access (OS X only)
 
 If you want puma-dev to run in the background while you're logged in and on a common port, then you'll need to install it.
 
@@ -59,7 +79,7 @@ Running `puma-dev` in this way will require you to use the listed http port, whi
 
 By default, puma-dev uses the domain `.dev` to manage your apps. If you want to have puma-dev look for apps in `~/.pow`, just run `puma-dev -pow`.
 
-### Configuration
+## Configuration
 
 Puma-dev supports loading environment variables before puma starts. It checks for the following files in this order:
 
@@ -73,13 +93,13 @@ Additionally, puma-dev uses a few environment variables to control how puma is s
 * `THREADS`: How many threads puma should use concurrently. Defaults to 5.
 * `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
 
-### Purging
+## Purging
 
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
 `pkill -USR1 puma-dev`
 
-### Uninstall
+### Uninstall (OS X only)
 
 Run: `puma-dev -uninstall`
 
@@ -119,25 +139,22 @@ In the case of rails, you need to configure rails to allow all websockets or web
 
 Or you can add something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
 
-## Linux
+### xip.io
 
-Puma-dev supports linux but requires additional installation to make all the features work.
+Puma-dev supports `xip.io` domains. It will detect them and strip them away, so that your `test` app can be accessed as `test.A.B.C.D.xip.io`.
 
-### .dev domain
+### Static file support
 
-Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make domains resolve.
+Like pow, puma-dev support serving static files. If an app has a `public` directory, then any urls that match files within that directory are served. The static files have priority over the app.
 
-### Port 80/443 binding
+### Status API
 
-There are 2 options to allow puma-dev to listen on port 80 and 443.
+Puma-dev is starting to evolve a status API that can be used to introspect it and the apps. To access it, send a request with the `Host: puma-dev` and the path `/status`, for example: `curl -H "Host: puma-dev" localhost/status`.
 
-1. `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
-2. Use `authbind`.
-
-You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
-
-There is a shortcut for binding to 80/443 by passing `-sysbind` which overrides `-http-port` and `-https-port`.
-
+The status includes:
+  * If it is booting, running, or dead
+  * The directory of the app
+  * The last 1024 lines the app output
 
 ## Development
 
