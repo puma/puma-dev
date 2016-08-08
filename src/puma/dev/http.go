@@ -98,15 +98,36 @@ func (h *HTTPServer) hostForApp(name string) (string, string, error) {
 	return app.Scheme, app.Address(), nil
 }
 
-func (h *HTTPServer) director(req *http.Request) error {
-	dot := strings.LastIndexByte(req.Host, '.')
-
-	var name string
-	if dot == -1 {
-		name = req.Host
-	} else {
-		name = req.Host[:dot]
+func (h *HTTPServer) removeTLD(host string) string {
+	colon := strings.LastIndexByte(host, ':')
+	if colon != -1 {
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
 	}
+
+	if strings.HasSuffix(host, ".xip.io") {
+		parts := strings.Split(host, ".")
+		if len(parts) < 6 {
+			return ""
+		}
+
+		name := strings.Join(parts[:len(parts)-6], ".")
+
+		return name
+	}
+
+	dot := strings.LastIndexByte(host, '.')
+
+	if dot == -1 {
+		return host
+	} else {
+		return host[:dot]
+	}
+}
+
+func (h *HTTPServer) director(req *http.Request) error {
+	name := h.removeTLD(req.Host)
 
 	var err error
 	req.URL.Scheme, req.URL.Host, err = h.hostForApp(name)
