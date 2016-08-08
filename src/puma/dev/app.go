@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"puma/linebuffer"
 	"puma/watch"
 	"strconv"
 	"sync"
@@ -30,6 +31,8 @@ type App struct {
 	Host    string
 	Port    int
 	Command *exec.Cmd
+
+	lines linebuffer.LineBuffer
 
 	address string
 	dir     string
@@ -85,6 +88,7 @@ func (a *App) watch() error {
 		for {
 			line, err := r.ReadString('\n')
 			if line != "" {
+				a.lines.Append(line)
 				fmt.Fprintf(os.Stdout, "%s[%d]: %s", a.Name, a.Command.Process.Pid, line)
 			}
 
@@ -193,6 +197,12 @@ func (a *App) Status() int {
 			return Dead
 		}
 	}
+}
+
+func (a *App) Log() string {
+	var buf bytes.Buffer
+	a.lines.WriteTo(&buf)
+	return buf.String()
 }
 
 const executionShell = `exec bash -c '
@@ -418,6 +428,15 @@ func (a *AppPool) remove(app *App) {
 
 	if a.AppClosed != nil {
 		a.AppClosed(app)
+	}
+}
+
+func (a *AppPool) ForApps(f func(*App)) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	for _, app := range a.apps {
+		f(app)
 	}
 }
 

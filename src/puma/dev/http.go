@@ -1,11 +1,15 @@
 package dev
 
 import (
+	"encoding/json"
 	"net"
 	"net/http"
 	"puma/httpu"
+	"puma/httputil"
 	"strings"
 	"time"
+
+	"github.com/bmizerany/pat"
 )
 
 type HTTPServer struct {
@@ -14,7 +18,9 @@ type HTTPServer struct {
 	Pool       *AppPool
 	Debug      bool
 
+	mux       *pat.PatternServeMux
 	transport *httpu.Transport
+	proxy     *httputil.ReverseProxy
 }
 
 func (h *HTTPServer) Setup() {
@@ -28,6 +34,17 @@ func (h *HTTPServer) Setup() {
 	}
 
 	h.Pool.AppClosed = h.AppClosed
+
+	h.proxy = &httputil.ReverseProxy{
+		Director:      h.director,
+		Transport:     h.transport,
+		FlushInterval: 1 * time.Second,
+		Debug:         h.Debug,
+	}
+
+	h.mux = pat.New()
+
+	h.mux.Get("/status", http.HandlerFunc(h.status))
 }
 
 func (h *HTTPServer) AppClosed(app *App) {
@@ -94,4 +111,47 @@ func (h *HTTPServer) director(req *http.Request) error {
 	var err error
 	req.URL.Scheme, req.URL.Host, err = h.hostForApp(name)
 	return err
+}
+
+func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Host == "puma-dev" {
+		h.mux.ServeHTTP(w, req)
+	} else {
+		h.proxy.ServeHTTP(w, req)
+	}
+}
+
+func (h *HTTPServer) status(w http.ResponseWriter, req *http.Request) {
+	type appStatus struct {
+		Scheme  string `json:"scheme"`
+		Address string `json:"address"`
+		Status  string `json:"status"`
+		Log     string `json:"log"`
+	}
+
+	statuses := map[string]appStatus{}
+
+	h.Pool.ForApps(func(a *App) {
+		var status string
+
+		switch a.Status() {
+		case Dead:
+			status = "dead"
+		case Booting:
+			status = "booting"
+		case Running:
+			status = "running"
+		default:
+			status = "unknown"
+		}
+
+		statuses[a.Name] = appStatus{
+			Scheme:  a.Scheme,
+			Address: a.Address(),
+			Status:  status,
+			Log:     a.Log(),
+		}
+	})
+
+	json.NewEncoder(w).Encode(statuses)
 }
