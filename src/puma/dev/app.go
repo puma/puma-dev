@@ -354,6 +354,12 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 	fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
 		name, app.Scheme, app.Address())
 
+	// to satisfy the tomb
+	app.t.Go(func() error {
+		<-app.t.Dying()
+		return nil
+	})
+
 	close(app.readyChan)
 
 	return app, nil
