@@ -3,18 +3,9 @@ package dev
 import (
 	"crypto/tls"
 	"net/http"
-	"puma/httputil"
-	"time"
 )
 
 func (h *HTTPServer) ServeTLS() error {
-	proxy := &httputil.ReverseProxy{
-		Director:      h.director,
-		Transport:     h.transport,
-		FlushInterval: 1 * time.Second,
-		Debug:         h.Debug,
-	}
-
 	certCache := NewCertCache()
 
 	tlsConfig := &tls.Config{
@@ -23,7 +14,7 @@ func (h *HTTPServer) ServeTLS() error {
 
 	serv := http.Server{
 		Addr:      h.TLSAddress,
-		Handler:   proxy,
+		Handler:   h,
 		TLSConfig: tlsConfig,
 	}
 
@@ -31,16 +22,9 @@ func (h *HTTPServer) ServeTLS() error {
 }
 
 func (h *HTTPServer) Serve() error {
-	proxy := &httputil.ReverseProxy{
-		Director:      h.director,
-		Transport:     h.transport,
-		FlushInterval: 1 * time.Second,
-		Debug:         h.Debug,
-	}
-
 	serv := http.Server{
 		Addr:    h.Address,
-		Handler: proxy,
+		Handler: h,
 	}
 
 	return serv.ListenAndServe()
