@@ -401,8 +401,12 @@ func (a *AppPool) App(name string) (*App, error) {
 	path := filepath.Join(a.Dir, name)
 
 	stat, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return nil, ErrUnknownApp
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrUnknownApp
+		}
+
+		return nil, err
 	}
 
 	if stat.IsDir() {
