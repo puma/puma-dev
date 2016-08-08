@@ -38,6 +38,26 @@ func Setup() error {
 				return err
 			}
 
+			files, err := ioutil.ReadDir(etcDir)
+			if err != nil {
+				return err
+			}
+
+			for _, fi := range files {
+				path := filepath.Join(etcDir, fi.Name())
+				fmt.Printf("* Changing '%s' to be owned by %s\n", path, sudo)
+
+				err = os.Chown(path, uid, gid)
+				if err != nil {
+					return err
+				}
+
+				err = os.Chmod(path, 0644)
+				if err != nil {
+					return err
+				}
+			}
+
 			ok = true
 		}
 	}
