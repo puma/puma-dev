@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"puma/httpu"
 	"puma/httputil"
 	"strings"
@@ -36,7 +39,7 @@ func (h *HTTPServer) Setup() {
 	h.Pool.AppClosed = h.AppClosed
 
 	h.proxy = &httputil.ReverseProxy{
-		Director:      h.director,
+		Proxy:         h.proxyReq,
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
 		Debug:         h.Debug,
@@ -61,6 +64,41 @@ func pruneSub(name string) string {
 	}
 
 	return name[dot+1:]
+}
+
+func (h *HTTPServer) findApp(name string) (*App, error) {
+	var (
+		app *App
+		err error
+	)
+
+	for name != "" {
+		app, err = h.Pool.App(name)
+		if err != nil {
+			if err == ErrUnknownApp {
+				name = pruneSub(name)
+				continue
+			}
+
+			return nil, err
+		}
+
+		break
+	}
+
+	if app == nil {
+		app, err = h.Pool.App("default")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = app.WaitTilReady()
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
 func (h *HTTPServer) hostForApp(name string) (string, string, error) {
@@ -126,11 +164,25 @@ func (h *HTTPServer) removeTLD(host string) string {
 	}
 }
 
-func (h *HTTPServer) director(req *http.Request) error {
+func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 	name := h.removeTLD(req.Host)
 
-	var err error
-	req.URL.Scheme, req.URL.Host, err = h.hostForApp(name)
+	app, err := h.findApp(name)
+	if err != nil {
+		return err
+	}
+
+	if app.Public && req.URL.Path != "/" {
+		path := filepath.Join(app.dir, "public", path.Clean(req.URL.Path))
+
+		_, err := os.Stat(path)
+		if err == nil {
+			http.ServeFile(w, req, path)
+			return httputil.ErrHandled
+		}
+	}
+
+	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
 	return err
 }
 

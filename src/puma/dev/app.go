@@ -31,6 +31,7 @@ type App struct {
 	Host    string
 	Port    int
 	Command *exec.Cmd
+	Public  bool
 
 	lines linebuffer.LineBuffer
 
@@ -276,6 +277,11 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		dir:       dir,
 		pool:      pool,
 		readyChan: make(chan struct{}),
+	}
+
+	stat, err := os.Stat(filepath.Join(dir, "public"))
+	if err == nil {
+		app.Public = stat.IsDir()
 	}
 
 	app.SetAddress("httpu", socket, 0)

@@ -8,12 +8,12 @@ package httputil
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -23,15 +23,16 @@ import (
 // flushLoop() goroutine.
 var onExitFlushLoop func()
 
+var ErrHandled = errors.New("request handled")
+
 // ReverseProxy is an HTTP Handler that takes an incoming request and
 // sends it to another server, proxying the response back to the
 // client.
 type ReverseProxy struct {
-	// Director must be a function which modifies
-	// the request into a new request to be sent
-	// using Transport. Its response is then copied
-	// back to the original client unmodified.
-	Director func(*http.Request) error
+	// Proxy is a function that either handles the request
+	// by sending back data or modifies request to be
+	// sent. In the former case, ErrHandled must be returned.
+	Proxy func(http.ResponseWriter, *http.Request) error
 
 	// The transport used to perform proxy requests.
 	// If nil, http.DefaultTransport is used.
@@ -75,30 +76,6 @@ func singleJoiningSlash(a, b string) string {
 		return a + "/" + b
 	}
 	return a + b
-}
-
-// NewSingleHostReverseProxy returns a new ReverseProxy that routes
-// URLs to the scheme, host, and base path provided in target. If the
-// target's path is "/base" and the incoming request was for "/dir",
-// the target request will be for /base/dir.
-// NewSingleHostReverseProxy does not rewrite the Host header.
-// To rewrite Host headers, use ReverseProxy directly with a custom
-// Director policy.
-func NewSingleHostReverseProxy(target *url.URL) *ReverseProxy {
-	targetQuery := target.RawQuery
-	director := func(req *http.Request) error {
-		req.URL.Scheme = target.Scheme
-		req.URL.Host = target.Host
-		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
-		if targetQuery == "" || req.URL.RawQuery == "" {
-			req.URL.RawQuery = targetQuery + req.URL.RawQuery
-		} else {
-			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
-		}
-
-		return nil
-	}
-	return &ReverseProxy{Director: director}
 }
 
 func copyHeader(dst, src http.Header) {
@@ -153,8 +130,12 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	outreq := new(http.Request)
 	*outreq = *req // includes shallow copies of maps, but okay
 
-	err := p.Director(outreq)
+	err := p.Proxy(rw, outreq)
 	if err != nil {
+		if err == ErrHandled {
+			return
+		}
+
 		rw.WriteHeader(500)
 		rw.Write([]byte(err.Error()))
 		return
