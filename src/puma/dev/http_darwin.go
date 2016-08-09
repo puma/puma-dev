@@ -3,7 +3,7 @@ package dev
 import (
 	"crypto/tls"
 	"net/http"
-	"puma/dev/launch"
+	"github.com/puma/puma-dev/src/puma/dev/launch"
 
 	"gopkg.in/tomb.v2"
 )

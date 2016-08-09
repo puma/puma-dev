@@ -8,7 +8,8 @@ package httputil
 
 import (
 	"io"
-	"net/http/internal"
+
+	"github.com/puma/puma-dev/src/puma/internal"
 )
 
 // NewChunkedReader returns a new chunkedReader that translates the data read from r

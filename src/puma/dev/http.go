@@ -7,10 +7,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"puma/httpu"
-	"puma/httputil"
 	"strings"
 	"time"
+
+	"github.com/puma/puma-dev/src/puma/httpu"
+	"github.com/puma/puma-dev/src/puma/httputil"
 
 	"github.com/bmizerany/pat"
 )
