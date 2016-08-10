@@ -1,4 +1,4 @@
-# Puma-dev: A development server for OS X and Linux
+# Puma-dev: A fast, zero-config development server for OS X
 
 Puma-dev is the emotional successor to pow. It provides a quick and easy way to manage apps in development on OS X.
 
