@@ -1,6 +1,6 @@
-# Puma-dev: A fast, zero-config development server for OS X
+# Puma-dev: A fast, zero-config development server for OS X and Linux
 
-Puma-dev is the emotional successor to pow. It provides a quick and easy way to manage apps in development on OS X.
+Puma-dev is the emotional successor to pow. It provides a quick and easy way to manage apps in development on OS X and Linux.
 
 ## Highlights
 
@@ -9,7 +9,7 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 ### Why not just use pow?
 
-Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole. Puma-dev also goes one step further and provides zero-config https support to your development environment.
+Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole. Puma-dev also goes one step further and provides zero-config https support to your development environment, as well as offering Linux support.
 
 ## Install
 
