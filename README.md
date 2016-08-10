@@ -9,7 +9,7 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 ### Why not just use pow?
 
-Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole.
+Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole. Puma-dev also goes one step further and provides zero-config https support to your development environment.
 
 ## Install
 
