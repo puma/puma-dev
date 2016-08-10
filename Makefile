@@ -1,4 +1,4 @@
 all:
-	gb build cmd/puma-dev
+	go build ./cmd/puma-dev
 
 .PHONY: all
