@@ -12,7 +12,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 
-	"puma/dev"
+	"github.com/puma/puma-dev/src/puma/dev"
 )
 
 var (

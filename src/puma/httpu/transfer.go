@@ -12,12 +12,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/internal"
 	"net/textproto"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/puma/puma-dev/src/puma/internal"
 )
 
 // ErrLineTooLong is returned when reading request or response bodies
