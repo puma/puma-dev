@@ -84,6 +84,12 @@
 			"revisionTime": "2016-02-21T10:44:43Z"
 		},
 		{
+			"checksumSHA1": "K6IYfOXBBSlLawOdBsCctW4vEXE=",
+			"path": "github.com/vektra/errors",
+			"revision": "c64d83aba85aa4392895aadeefabbd24e89f3580",
+			"revisionTime": "2014-09-03T20:11:35Z"
+		},
+		{
 			"checksumSHA1": "jRwT1sRDwCzIASk3cYCIxxcL0VE=",
 			"path": "github.com/vektra/neko",
 			"revision": "843f5ecf6932d8e4d759fc523b2107d103de5117",

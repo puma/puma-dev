@@ -4,18 +4,20 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
 	"math/big"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/golang-lru"
+	"github.com/vektra/errors"
 )
 
 var CACert *tls.Certificate
@@ -28,24 +30,74 @@ func SetupOurCert() error {
 		return err
 	}
 
-	key := filepath.Join(dir, "key.pem")
-	cert := filepath.Join(dir, "cert.pem")
+	keyPath := filepath.Join(dir, "key.pem")
+	certPath := filepath.Join(dir, "cert.pem")
 
-	tlsCert, err := tls.LoadX509KeyPair(cert, key)
+	tlsCert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err == nil {
 		CACert = &tlsCert
 		return nil
 	}
 
-	err = exec.Command("sh", "-c",
-		fmt.Sprintf(
-			`openssl req -newkey rsa:2048 -batch -x509 -sha256 -nodes -subj "/C=US/O=Developer Certificate/CN=Puma-dev CA" -keyout '%s' -out '%s' -days 9999`,
-			key, cert)).Run()
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return err
+		return errors.Context(err, "generating new RSA key")
 	}
 
-	return TrustCert(cert)
+	// create certificate structure with proper values
+	notBefore := time.Now()
+	notAfter := notBefore.Add(9999 * 24 * time.Hour)
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return errors.Context(err, "generating serial number")
+	}
+
+	cert := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Developer Certificate"},
+			CommonName:   "Puma-dev CA",
+		},
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA: true,
+	}
+
+	derBytes, err := x509.CreateCertificate(
+		rand.Reader, cert, cert, priv.Public(), priv)
+
+	if err != nil {
+		return errors.Context(err, "creating CA cert")
+	}
+
+	certOut, err := os.Create(certPath)
+	if err != nil {
+		return errors.Context(err, "writing cert.pem")
+	}
+
+	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	certOut.Close()
+
+	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return errors.Context(err, "writing key.pem")
+	}
+
+	pem.Encode(
+		keyOut,
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(priv),
+		},
+	)
+
+	keyOut.Close()
+
+	return TrustCert(certPath)
 }
 
 type certCache struct {
