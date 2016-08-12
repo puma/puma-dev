@@ -49,5 +49,32 @@ func TestLineBuffer(t *testing.T) {
 		assert.Equal(t, "hello4", lines[2])
 	})
 
+	n.It("wraps around automatically multiple times", func() {
+		var lb LineBuffer
+
+		lb.Size = 3
+
+		lb.Append("hello1")
+		lb.Append("hello2")
+		lb.Append("hello3")
+		lb.Append("hello4")
+		lb.Append("hello5")
+		lb.Append("hello6")
+		lb.Append("hello7")
+
+		var lines []string
+
+		lb.Do(func(x string) error {
+			lines = append(lines, x)
+			return nil
+		})
+
+		assert.Equal(t, 3, len(lb.lines))
+
+		assert.Equal(t, "hello5", lines[0])
+		assert.Equal(t, "hello6", lines[1])
+		assert.Equal(t, "hello7", lines[2])
+	})
+
 	n.Meow()
 }

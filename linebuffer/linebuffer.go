@@ -28,6 +28,10 @@ func (lb *LineBuffer) Append(line string) error {
 	} else {
 		lb.lines[lb.cur] = line
 		lb.cur++
+
+		if lb.cur == len(lb.lines) {
+			lb.cur = 0
+		}
 	}
 
 	return nil
