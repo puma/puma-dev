@@ -3,7 +3,6 @@ package dev
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/puma/puma-dev/linebuffer"
 	"github.com/puma/puma-dev/watch"
+	"github.com/vektra/errors"
 	"gopkg.in/tomb.v2"
 )
 
@@ -32,6 +32,7 @@ type App struct {
 	Port    int
 	Command *exec.Cmd
 	Public  bool
+	Events  *Events
 
 	lines linebuffer.LineBuffer
 
@@ -49,6 +50,13 @@ type App struct {
 	booting bool
 
 	readyChan chan struct{}
+}
+
+func (a *App) eventAdd(name string, args ...interface{}) {
+	args = append([]interface{}{"app", a.Name}, args...)
+
+	str := a.Events.Add(name, args...)
+	a.lines.Append("#event " + str)
 }
 
 func (a *App) SetAddress(scheme, host string, port int) {
@@ -71,10 +79,19 @@ func (a *App) Address() string {
 	return fmt.Sprintf("%s:%d", a.Host, a.Port)
 }
 
-func (a *App) Kill() error {
+func (a *App) Kill(reason string) error {
+	a.eventAdd("killing_app",
+		"pid", a.Command.Process.Pid,
+		"reason", reason,
+	)
+
 	fmt.Printf("! Killing '%s' (%d)\n", a.Name, a.Command.Process.Pid)
 	err := a.Command.Process.Kill()
 	if err != nil {
+		a.eventAdd("killing_error",
+			"pid", a.Command.Process.Pid,
+			"error", err.Error(),
+		)
 		fmt.Printf("! Error trying to kill %s: %s", a.Name, err)
 	}
 	return err
@@ -102,20 +119,25 @@ func (a *App) watch() error {
 
 	var err error
 
+	reason := "detected interval shutdown"
+
 	select {
 	case err = <-c:
+		reason = "stdout/stderr closed"
 		err = ErrUnexpectedExit
 	case <-a.t.Dying():
 		err = nil
 	}
 
-	a.Kill()
+	a.Kill(reason)
 	a.Command.Wait()
 	a.pool.remove(a)
 
 	if a.Scheme == "httpu" {
 		os.Remove(a.Address())
 	}
+
+	a.eventAdd("shutdown")
 
 	fmt.Printf("* App '%s' shutdown and cleaned up\n", a.Name)
 
@@ -130,7 +152,7 @@ func (a *App) idleMonitor() error {
 		select {
 		case <-ticker.C:
 			if a.pool.maybeIdle(a) {
-				a.Kill()
+				a.Kill("app is idle")
 				return nil
 			}
 		case <-a.t.Dying():
@@ -157,7 +179,7 @@ func (a *App) restartMonitor() error {
 	f.Close()
 
 	return watch.Watch(restart, a.t.Dying(), func() {
-		a.Kill()
+		a.Kill("restart.txt touched")
 	})
 }
 
@@ -254,8 +276,6 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		"CONFIG=-",
 	)
 
-	cmd.Stderr = os.Stderr
-
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -265,7 +285,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, errors.Context(err, "starting app")
 	}
 
 	fmt.Printf("! Booting app '%s' on socket %s\n", name, socket)
@@ -273,11 +293,14 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	app := &App{
 		Name:      name,
 		Command:   cmd,
+		Events:    pool.Events,
 		stdout:    stdout,
 		dir:       dir,
 		pool:      pool,
 		readyChan: make(chan struct{}),
 	}
+
+	app.eventAdd("booting_app", "socket", socket)
 
 	stat, err := os.Stat(filepath.Join(dir, "public"))
 	if err == nil {
@@ -294,17 +317,21 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		// This is a poor substitute for getting an actual readiness signal
 		// from puma but it's good enough.
 
+		app.eventAdd("waiting_on_app")
+
 		ticker := time.NewTicker(250 * time.Millisecond)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-app.t.Dying():
+				app.eventAdd("dying_on_start")
 				fmt.Printf("! Detecting app '%s' dying on start\n", name)
 				return fmt.Errorf("app died before booting")
 			case <-ticker.C:
 				c, err := net.Dial("unix", socket)
 				if err == nil {
 					c.Close()
+					app.eventAdd("app_ready")
 					fmt.Printf("! App '%s' booted\n", name)
 					close(app.readyChan)
 					return nil
@@ -324,6 +351,7 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 
 	app := &App{
 		Name:      name,
+		Events:    pool.Events,
 		pool:      pool,
 		readyChan: make(chan struct{}),
 	}
@@ -357,6 +385,9 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 		app.SetAddress(u.Scheme, host, port)
 	}
 
+	app.eventAdd("proxy_created",
+		"destination", fmt.Sprintf("%s://%s"), app.Scheme, app.Address())
+
 	fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
 		name, app.Scheme, app.Address())
 
@@ -375,6 +406,7 @@ type AppPool struct {
 	Dir      string
 	IdleTime time.Duration
 	Debug    bool
+	Events   *Events
 
 	AppClosed func(*App)
 
@@ -388,6 +420,7 @@ func (a *AppPool) maybeIdle(app *App) bool {
 
 	diff := time.Since(app.lastUse)
 	if diff > a.IdleTime {
+		app.eventAdd("idle_app", "last_used", diff.String())
 		delete(a.apps, app.Name)
 		return true
 	}
@@ -412,9 +445,19 @@ func (a *AppPool) App(name string) (*App, error) {
 
 	path := filepath.Join(a.Dir, name)
 
+	a.Events.Add("app_lookup", "path", path)
+
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
+			// Check there might be a link there but it's not valid
+			_, err := os.Lstat(path)
+			if err == nil {
+				dest, _ := os.Readlink(path)
+				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, dest)
+				a.Events.Add("bad_symlink", "path", path, "dest", dest)
+			}
+
 			return nil, ErrUnknownApp
 		}
 
@@ -428,6 +471,7 @@ func (a *AppPool) App(name string) (*App, error) {
 	}
 
 	if err != nil {
+		a.Events.Add("error_starting_app", "app", name, "error", err.Error())
 		return nil, err
 	}
 
@@ -468,10 +512,13 @@ func (a *AppPool) Purge() {
 	a.lock.Unlock()
 
 	for _, app := range apps {
+		app.eventAdd("purging_app")
 		app.t.Kill(nil)
 	}
 
 	for _, app := range apps {
 		app.t.Wait()
 	}
+
+	a.Events.Add("apps_purged")
 }

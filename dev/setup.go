@@ -10,6 +10,7 @@ import (
 
 	"github.com/kardianos/osext"
 	"github.com/mitchellh/go-homedir"
+	"github.com/vektra/errors"
 )
 
 func Setup() error {
@@ -111,7 +112,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 
 	binPath, err := osext.Executable()
 	if err != nil {
-		return err
+		return errors.Context(err, "calculating executable path")
 	}
 
 	fmt.Printf("* Use '%s' as the location of puma-dev\n", binPath)
@@ -173,7 +174,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 	)
 
 	if err != nil {
-		return err
+		return errors.Context(err, "writing LaunchAgent plist")
 	}
 
 	// Unload a previous one if need be.
@@ -181,7 +182,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 
 	err = exec.Command("launchctl", "load", plist).Run()
 	if err != nil {
-		return err
+		return errors.Context(err, "loading plist into launchctl")
 	}
 
 	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", listenPort, tlsPort)

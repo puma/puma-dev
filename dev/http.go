@@ -2,6 +2,7 @@ package dev
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +21,7 @@ type HTTPServer struct {
 	TLSAddress string
 	Pool       *AppPool
 	Debug      bool
+	Events     *Events
 
 	mux       *pat.PatternServeMux
 	transport *httpu.Transport
@@ -48,6 +50,7 @@ func (h *HTTPServer) Setup() {
 	h.mux = pat.New()
 
 	h.mux.Get("/status", http.HandlerFunc(h.status))
+	h.mux.Get("/events", http.HandlerFunc(h.events))
 }
 
 func (h *HTTPServer) AppClosed(app *App) {
@@ -169,6 +172,12 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 
 	app, err := h.findApp(name)
 	if err != nil {
+		if err == ErrUnknownApp {
+			h.Events.Add("unknown_app", "name", name, "host", req.Host)
+		} else {
+			h.Events.Add("lookup_error", "error", err.Error())
+		}
+
 		return err
 	}
 
@@ -187,6 +196,12 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 }
 
 func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if h.Debug {
+		fmt.Fprintf(os.Stderr, "%s: %s '%s' (host=%s)\n",
+			time.Now().Format(time.RFC3339Nano),
+			req.Method, req.URL.Path, req.Host)
+	}
+
 	if req.Host == "puma-dev" {
 		h.mux.ServeHTTP(w, req)
 	} else {
@@ -227,4 +242,8 @@ func (h *HTTPServer) status(w http.ResponseWriter, req *http.Request) {
 	})
 
 	json.NewEncoder(w).Encode(statuses)
+}
+
+func (h *HTTPServer) events(w http.ResponseWriter, req *http.Request) {
+	h.Events.WriteTo(w)
 }

@@ -82,9 +82,12 @@ func main() {
 		log.Fatalf("Unable to create dir '%s': %s", dir, err)
 	}
 
+	var events dev.Events
+
 	var pool dev.AppPool
 	pool.Dir = dir
 	pool.IdleTime = *fTimeout
+	pool.Events = &events
 
 	purge := make(chan os.Signal, 1)
 
@@ -142,6 +145,7 @@ func main() {
 	http.TLSAddress = fmt.Sprintf("127.0.0.1:%d", *fTLSPort)
 	http.Pool = &pool
 	http.Debug = *fDebug
+	http.Events = &events
 
 	http.Setup()
 
