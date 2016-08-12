@@ -156,6 +156,12 @@ The status includes:
   * The directory of the app
   * The last 1024 lines the app output
 
+## Subcommands
+
+### `puma-dev link [-n name] [dir]`
+
+Creates links to app directories into your puma-dev directory (`~/.puma-dev` by default).
+
 ## Development
 
 To build puma-dev, follow these steps:
