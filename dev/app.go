@@ -298,6 +298,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		dir:       dir,
 		pool:      pool,
 		readyChan: make(chan struct{}),
+		lastUse:   time.Now(),
 	}
 
 	app.eventAdd("booting_app", "socket", socket)
@@ -354,6 +355,7 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 		Events:    pool.Events,
 		pool:      pool,
 		readyChan: make(chan struct{}),
+		lastUse:   time.Now(),
 	}
 
 	data = bytes.TrimSpace(data)
