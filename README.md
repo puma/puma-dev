@@ -167,8 +167,8 @@ Creates links to app directories into your puma-dev directory (`~/.puma-dev` by 
 To build puma-dev, follow these steps:
 
 * Install golang (http://golang.org)
-* Install gb (http://getgb.io)
-* Run `make`
-* Run `bin/puma-dev` to use your new binary
+* Clone puma-dev to `src/github.com/puma/puma-dev` under your `gocode` directory. 
+* `cd` into the new `puma-dev` directory
+* Run `go build ./cmd/puma-dev`
+* Run `puma-dev` to use your new binary
 
-Puma-dev uses gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
