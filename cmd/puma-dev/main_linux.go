@@ -28,15 +28,7 @@ var (
 func main() {
 	flag.Parse()
 
-	if flag.NArg() > 0 {
-		err := command()
-		if err != nil {
-			fmt.Printf("Error: %s\n", err)
-			os.Exit(1)
-		}
-
-		return
-	}
+	allCheck()
 
 	domains := strings.Split(*fDomains, ":")
 
