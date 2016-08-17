@@ -88,8 +88,8 @@ func main() {
 
 	var http dev.HTTPServer
 
-	http.Address = fmt.Sprintf("127.0.0.1:%d", *fHTTPPort)
-	http.TLSAddress = fmt.Sprintf("127.0.0.1:%d", *fTLSPort)
+	http.Address = fmt.Sprintf(":%d", *fHTTPPort)
+	http.TLSAddress = fmt.Sprintf(":%d", *fTLSPort)
 	http.Pool = &pool
 	http.Debug = *fDebug
 	http.Events = &events
