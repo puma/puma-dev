@@ -17,13 +17,14 @@ import (
 	"time"
 
 	"github.com/hashicorp/golang-lru"
+	"github.com/puma/puma-dev/homedir"
 	"github.com/vektra/errors"
 )
 
 var CACert *tls.Certificate
 
 func SetupOurCert() error {
-	dir := mustExpand(supportDir)
+	dir := homedir.MustExpand(supportDir)
 
 	err := os.MkdirAll(dir, 0700)
 	if err != nil {

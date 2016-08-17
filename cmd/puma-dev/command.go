@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/puma/puma-dev/homedir"
 	"github.com/vektra/errors"
 )
 

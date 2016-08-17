@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/kardianos/osext"
-	"github.com/mitchellh/go-homedir"
+	"github.com/puma/puma-dev/homedir"
 	"github.com/vektra/errors"
 )
 
@@ -74,15 +74,6 @@ func Setup() error {
 	return nil
 }
 
-func mustExpand(str string) string {
-	str, err := homedir.Expand(str)
-	if err != nil {
-		panic(err)
-	}
-
-	return str
-}
-
 func Cleanup() {
 	oldSetup := "/Library/LaunchDaemons/io.puma.devsetup.plist"
 
@@ -97,7 +88,7 @@ func Cleanup() {
 	gid, err2 := strconv.Atoi(os.Getenv("SUDO_GID"))
 
 	if err1 == nil && err2 == nil {
-		plist := mustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
+		plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 		os.Chown(plist, uid, gid)
 
 		fmt.Printf("* Fixed permissions of user LaunchAgent\n")
@@ -163,9 +154,9 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 </plist>
 `
 
-	logPath := mustExpand("~/Library/Logs/puma-dev.log")
+	logPath := homedir.MustExpand("~/Library/Logs/puma-dev.log")
 
-	plist := mustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
+	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 
 	err = ioutil.WriteFile(
 		plist,
@@ -191,7 +182,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 }
 
 func Uninstall(domains []string) {
-	plist := mustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
+	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 
 	// Unload a previous one if need be.
 	exec.Command("launchctl", "unload", plist).Run()
