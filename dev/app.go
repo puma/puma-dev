@@ -245,7 +245,7 @@ if test -e .powenv; then
 	source .powenv
 fi
 
-if test -e Gemfile; then
+if test -e Gemfile && bundle show puma > /dev/null 2>&1; then
 	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 fi
 
