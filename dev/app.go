@@ -260,7 +260,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		return nil, err
 	}
 
-	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
+	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%s-%d.sock", name, os.Getpid()))
 
 	shell := os.Getenv("SHELL")
 
