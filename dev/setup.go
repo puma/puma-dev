@@ -156,7 +156,14 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 
 	logPath := homedir.MustExpand("~/Library/Logs/puma-dev.log")
 
+	plistDir := homedir.MustExpand("~/Library/LaunchAgents")
 	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
+
+	err = os.MkdirAll(plistDir, 0644)
+
+	if err != nil {
+		return errors.Context(err, "creating LaunchAgent directory")
+	}
 
 	err = ioutil.WriteFile(
 		plist,
