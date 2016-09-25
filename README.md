@@ -19,6 +19,9 @@ Pow doesn't support rack.hijack and thus not websockets and thus not actioncable
 * Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
   * If you're currently using pow, puma-dev taking control of `.dev` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
 
+*NOTE:* if you had pow installed before in the system, please make sure to run
+pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
+
 ### Install on Linux
 
 * Puma-dev supports linux but requires additional installation to make all the features work.
