@@ -229,6 +229,8 @@ func (a *App) Log() string {
 }
 
 const executionShell = `exec bash -c '
+cd %s
+
 if test -e ~/.powconfig; then
 	source ~/.powconfig
 fi
@@ -249,7 +251,6 @@ if test -e Gemfile; then
 	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 fi
 
-
 exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 `
 
@@ -265,7 +266,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	shell := os.Getenv("SHELL")
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf(executionShell, name, socket, name, socket))
+		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
 
 	cmd.Dir = dir
 
