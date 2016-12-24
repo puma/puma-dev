@@ -11,7 +11,7 @@ const supportDir = "~/Library/Application Support/io.puma.dev"
 
 func TrustCert(cert string) error {
 	fmt.Printf("* Adding certification to login keychain as trusted\n")
-	fmt.Printf("! There is probably a dialog open that you must type your password into\n")
+	fmt.Printf("! There is probably a dialog open that requires you to authenticate\n")
 
 	login := homedir.MustExpand("~/Library/Keychains/login.keychain")
 
