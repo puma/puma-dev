@@ -13,7 +13,7 @@ Pow doesn't support rack.hijack and thus not websockets and thus not actioncable
 
 ## Install
 
-* Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
+* Via Homebrew is the easiest: `brew tap puma/puma && brew install puma/puma/puma-dev`
 * Or download the latest release from https://github.com/puma/puma-dev/releases
 * If you haven't run puma-dev before, run: `sudo puma-dev -setup` to configure some DNS settings that have to be done as root
 * Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
