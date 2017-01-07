@@ -29,7 +29,7 @@ func LoginKeyChain() (string, error) {
 
 func TrustCert(cert string) error {
 	fmt.Printf("* Adding certification to login keychain as trusted\n")
-	fmt.Printf("! There is probably a dialog open that you must type your password into\n")
+	fmt.Printf("! There is probably a dialog open that requires you to authenticate\n")
 
 	login, keychainError := LoginKeyChain()
 
