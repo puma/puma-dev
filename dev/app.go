@@ -415,6 +415,7 @@ type AppPool struct {
 
 	lock sync.Mutex
 	apps map[string]*App
+	aliases map[string]string
 }
 
 func (a *AppPool) maybeIdle(app *App) bool {
@@ -441,9 +442,21 @@ func (a *AppPool) App(name string) (*App, error) {
 		a.apps = make(map[string]*App)
 	}
 
+	if a.aliases == nil {
+		a.aliases = make(map[string]string)
+	}
+
 	app, ok := a.apps[name]
 	if ok {
 		return app, nil
+	}
+
+	aliasName, ok := a.aliases[name]
+	if ok {
+		app, ok := a.apps[aliasName]
+		if ok {
+			return app, nil
+		}
 	}
 
 	path := filepath.Join(a.Dir, name)
@@ -451,20 +464,32 @@ func (a *AppPool) App(name string) (*App, error) {
 	a.Events.Add("app_lookup", "path", path)
 
 	stat, err := os.Stat(path)
+	destPath, _ := os.Readlink(path)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Check there might be a link there but it's not valid
 			_, err := os.Lstat(path)
 			if err == nil {
-				dest, _ := os.Readlink(path)
-				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, dest)
-				a.Events.Add("bad_symlink", "path", path, "dest", dest)
+				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, destPath)
+				a.Events.Add("bad_symlink", "path", path, "dest", destPath)
 			}
 
 			return nil, ErrUnknownApp
 		}
 
 		return nil, err
+	}
+
+	// Handle multiple links to the same app
+	destStat, err := os.Stat(destPath)
+	if err == nil {
+		destName := destStat.Name()
+		app, ok := a.apps[destName]
+		if ok {
+			a.aliases[name] = destName
+			return app, nil
+		}
 	}
 
 	if stat.IsDir() {
@@ -488,6 +513,13 @@ func (a *AppPool) remove(app *App) {
 	defer a.lock.Unlock()
 
 	delete(a.apps, app.Name)
+
+	// Clean up aliases
+	for key, value := range a.aliases {
+		if app.Name == value {
+			delete(a.aliases, key)
+		}
+	}
 
 	if a.AppClosed != nil {
 		a.AppClosed(app)
