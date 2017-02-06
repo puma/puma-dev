@@ -415,7 +415,6 @@ type AppPool struct {
 
 	lock sync.Mutex
 	apps map[string]*App
-	aliases map[string]string
 }
 
 func (a *AppPool) maybeIdle(app *App) bool {
@@ -442,21 +441,9 @@ func (a *AppPool) App(name string) (*App, error) {
 		a.apps = make(map[string]*App)
 	}
 
-	if a.aliases == nil {
-		a.aliases = make(map[string]string)
-	}
-
 	app, ok := a.apps[name]
 	if ok {
 		return app, nil
-	}
-
-	aliasName, ok := a.aliases[name]
-	if ok {
-		app, ok := a.apps[aliasName]
-		if ok {
-			return app, nil
-		}
 	}
 
 	path := filepath.Join(a.Dir, name)
@@ -481,29 +468,39 @@ func (a *AppPool) App(name string) (*App, error) {
 		return nil, err
 	}
 
-	// Handle multiple links to the same app
+	canonicalName := name
+	aliasName := ""
+
+	// Handle multiple symlinks to the same app
 	destStat, err := os.Stat(destPath)
 	if err == nil {
 		destName := destStat.Name()
-		app, ok := a.apps[destName]
-		if ok {
-			a.aliases[name] = destName
-			return app, nil
+		if destName != canonicalName {
+			canonicalName = destName
+			aliasName = name
 		}
 	}
 
-	if stat.IsDir() {
-		app, err = a.LaunchApp(name, path)
-	} else {
-		app, err = a.readProxy(name, path)
+	app, ok = a.apps[canonicalName]
+
+	if !ok {
+		if stat.IsDir() {
+			app, err = a.LaunchApp(canonicalName, path)
+		} else {
+			app, err = a.readProxy(canonicalName, path)
+		}
 	}
 
 	if err != nil {
-		a.Events.Add("error_starting_app", "app", name, "error", err.Error())
+		a.Events.Add("error_starting_app", "app", canonicalName, "error", err.Error())
 		return nil, err
 	}
 
-	a.apps[name] = app
+	a.apps[canonicalName] = app
+
+	if aliasName != "" {
+		a.apps[aliasName] = app
+	}
 
 	return app, nil
 }
@@ -512,12 +509,10 @@ func (a *AppPool) remove(app *App) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	delete(a.apps, app.Name)
-
-	// Clean up aliases
-	for key, value := range a.aliases {
-		if app.Name == value {
-			delete(a.aliases, key)
+	// Find all instance references so aliases are removed too
+	for name, candidate := range a.apps {
+		if candidate == app {
+			delete(a.apps, name)
 		}
 	}
 
