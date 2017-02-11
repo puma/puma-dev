@@ -185,7 +185,7 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 		path := filepath.Join(app.dir, "public", path.Clean(req.URL.Path))
 
 		fi, err := os.Stat(path)
-		if err == nil && fi.Mode().IsRegular() {
+		if err == nil && !fi.IsDir() {
 			http.ServeFile(w, req, path)
 			return httputil.ErrHandled
 		}
