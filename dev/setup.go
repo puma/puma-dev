@@ -188,6 +188,15 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 	return nil
 }
 
+func Stop() error {
+	err := exec.Command("pkill", "-USR1", "puma-dev").Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Uninstall(domains []string) {
 	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 

@@ -26,6 +26,7 @@ var (
 	fLaunch   = flag.Bool("launchd", false, "Use socket from launchd")
 
 	fSetup = flag.Bool("setup", false, "Run system setup")
+	fStop  = flag.Bool("stop", false, "Stop all puma-dev servers")
 
 	fInstall     = flag.Bool("install", false, "Install puma-dev as a user service")
 	fInstallPort = flag.Int("install-port", 80, "Port to run puma-dev on when installed")
@@ -69,6 +70,14 @@ func main() {
 		err := dev.Setup()
 		if err != nil {
 			log.Fatalf("Unable to configure OS X resolver: %s", err)
+		}
+		return
+	}
+
+	if *fStop {
+		err := dev.Stop()
+		if err != nil {
+			log.Fatalf("Unable to stop puma-dev servers: %s", err)
 		}
 		return
 	}
