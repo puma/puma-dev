@@ -100,7 +100,7 @@ Additionally, puma-dev uses a few environment variables to control how puma is s
 
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
-`pkill -USR1 puma-dev`
+`puma-dev -stop`
 
 ### Uninstall (OS X only)
 
