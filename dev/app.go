@@ -247,7 +247,7 @@ if test -e .powenv; then
 	source .powenv
 fi
 
-if test -e Gemfile && grep -q '\spuma$' Gemfile.lock; then
+if test -e Gemfile && bundle exec puma -V &>/dev/null; then
 	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 fi
 
