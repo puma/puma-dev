@@ -22,6 +22,7 @@ var (
 	fSysBind  = flag.Bool("sysbind", false, "bind to ports 80 and 443")
 	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
+	fStop     = flag.Bool("stop", false, "Stop all puma-dev servers")
 )
 
 func main() {
@@ -30,6 +31,14 @@ func main() {
 	allCheck()
 
 	domains := strings.Split(*fDomains, ":")
+
+	if *fStop {
+		err := dev.Stop()
+		if err != nil {
+			log.Fatalf("Unable to stop puma-dev servers: %s", err)
+		}
+		return
+	}
 
 	if *fSysBind {
 		*fHTTPPort = 80
