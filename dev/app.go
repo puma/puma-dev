@@ -451,14 +451,15 @@ func (a *AppPool) App(name string) (*App, error) {
 	a.Events.Add("app_lookup", "path", path)
 
 	stat, err := os.Stat(path)
+	destPath, _ := os.Readlink(path)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Check there might be a link there but it's not valid
 			_, err := os.Lstat(path)
 			if err == nil {
-				dest, _ := os.Readlink(path)
-				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, dest)
-				a.Events.Add("bad_symlink", "path", path, "dest", dest)
+				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, destPath)
+				a.Events.Add("bad_symlink", "path", path, "dest", destPath)
 			}
 
 			return nil, ErrUnknownApp
@@ -467,18 +468,39 @@ func (a *AppPool) App(name string) (*App, error) {
 		return nil, err
 	}
 
-	if stat.IsDir() {
-		app, err = a.LaunchApp(name, path)
-	} else {
-		app, err = a.readProxy(name, path)
+	canonicalName := name
+	aliasName := ""
+
+	// Handle multiple symlinks to the same app
+	destStat, err := os.Stat(destPath)
+	if err == nil {
+		destName := destStat.Name()
+		if destName != canonicalName {
+			canonicalName = destName
+			aliasName = name
+		}
+	}
+
+	app, ok = a.apps[canonicalName]
+
+	if !ok {
+		if stat.IsDir() {
+			app, err = a.LaunchApp(canonicalName, path)
+		} else {
+			app, err = a.readProxy(canonicalName, path)
+		}
 	}
 
 	if err != nil {
-		a.Events.Add("error_starting_app", "app", name, "error", err.Error())
+		a.Events.Add("error_starting_app", "app", canonicalName, "error", err.Error())
 		return nil, err
 	}
 
-	a.apps[name] = app
+	a.apps[canonicalName] = app
+
+	if aliasName != "" {
+		a.apps[aliasName] = app
+	}
 
 	return app, nil
 }
@@ -487,7 +509,12 @@ func (a *AppPool) remove(app *App) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	delete(a.apps, app.Name)
+	// Find all instance references so aliases are removed too
+	for name, candidate := range a.apps {
+		if candidate == app {
+			delete(a.apps, name)
+		}
+	}
 
 	if a.AppClosed != nil {
 		a.AppClosed(app)
