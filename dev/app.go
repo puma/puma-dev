@@ -415,14 +415,14 @@ type AppPool struct {
 	apps map[string]*App
 }
 
-func (a *AppPool) maybeIdle(app *App) bool {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+func (pool *AppPool) maybeIdle(app *App) bool {
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
 
 	diff := time.Since(app.lastUse)
-	if diff > a.IdleTime {
+	if diff > pool.IdleTime {
 		app.eventAdd("idle_app", "last_used", diff.String())
-		delete(a.apps, app.Name)
+		delete(pool.apps, app.Name)
 		return true
 	}
 
@@ -431,22 +431,22 @@ func (a *AppPool) maybeIdle(app *App) bool {
 
 var ErrUnknownApp = errors.New("unknown app")
 
-func (a *AppPool) App(name string) (*App, error) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+func (pool *AppPool) App(name string) (*App, error) {
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
 
-	if a.apps == nil {
-		a.apps = make(map[string]*App)
+	if pool.apps == nil {
+		pool.apps = make(map[string]*App)
 	}
 
-	app, ok := a.apps[name]
+	app, ok := pool.apps[name]
 	if ok {
 		return app, nil
 	}
 
-	path := filepath.Join(a.Dir, name)
+	path := filepath.Join(pool.Dir, name)
 
-	a.Events.Add("app_lookup", "path", path)
+	pool.Events.Add("app_lookup", "path", path)
 
 	stat, err := os.Stat(path)
 	destPath, _ := os.Readlink(path)
@@ -457,7 +457,7 @@ func (a *AppPool) App(name string) (*App, error) {
 			_, err := os.Lstat(path)
 			if err == nil {
 				fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, destPath)
-				a.Events.Add("bad_symlink", "path", path, "dest", destPath)
+				pool.Events.Add("bad_symlink", "path", path, "dest", destPath)
 			}
 
 			return nil, ErrUnknownApp
@@ -479,65 +479,65 @@ func (a *AppPool) App(name string) (*App, error) {
 		}
 	}
 
-	app, ok = a.apps[canonicalName]
+	app, ok = pool.apps[canonicalName]
 
 	if !ok {
 		if stat.IsDir() {
-			app, err = a.LaunchApp(canonicalName, path)
+			app, err = pool.LaunchApp(canonicalName, path)
 		} else {
-			app, err = a.readProxy(canonicalName, path)
+			app, err = pool.readProxy(canonicalName, path)
 		}
 	}
 
 	if err != nil {
-		a.Events.Add("error_starting_app", "app", canonicalName, "error", err.Error())
+		pool.Events.Add("error_starting_app", "app", canonicalName, "error", err.Error())
 		return nil, err
 	}
 
-	a.apps[canonicalName] = app
+	pool.apps[canonicalName] = app
 
 	if aliasName != "" {
-		a.apps[aliasName] = app
+		pool.apps[aliasName] = app
 	}
 
 	return app, nil
 }
 
-func (a *AppPool) remove(app *App) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+func (pool *AppPool) remove(app *App) {
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
 
 	// Find all instance references so aliases are removed too
-	for name, candidate := range a.apps {
+	for name, candidate := range pool.apps {
 		if candidate == app {
-			delete(a.apps, name)
+			delete(pool.apps, name)
 		}
 	}
 
-	if a.AppClosed != nil {
-		a.AppClosed(app)
+	if pool.AppClosed != nil {
+		pool.AppClosed(app)
 	}
 }
 
-func (a *AppPool) ForApps(f func(*App)) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+func (pool *AppPool) ForApps(f func(*App)) {
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
 
-	for _, app := range a.apps {
+	for _, app := range pool.apps {
 		f(app)
 	}
 }
 
-func (a *AppPool) Purge() {
-	a.lock.Lock()
+func (pool *AppPool) Purge() {
+	pool.lock.Lock()
 
 	var apps []*App
 
-	for _, app := range a.apps {
+	for _, app := range pool.apps {
 		apps = append(apps, app)
 	}
 
-	a.lock.Unlock()
+	pool.lock.Unlock()
 
 	for _, app := range apps {
 		app.eventAdd("purging_app")
@@ -548,5 +548,5 @@ func (a *AppPool) Purge() {
 		app.t.Wait()
 	}
 
-	a.Events.Add("apps_purged")
+	pool.Events.Add("apps_purged")
 }
