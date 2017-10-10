@@ -159,8 +159,6 @@ func (a *App) idleMonitor() error {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 func (a *App) restartMonitor() error {
