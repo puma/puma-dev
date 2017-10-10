@@ -21,9 +21,9 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-const DefaultThreads = 5
+const defaultThreads = 5
 
-var ErrUnexpectedExit = errors.New("unexpected exit")
+var errUnexpectedExit = errors.New("unexpected exit")
 
 type App struct {
 	Name    string
@@ -124,7 +124,7 @@ func (a *App) watch() error {
 	select {
 	case err = <-c:
 		reason = "stdout/stderr closed"
-		err = ErrUnexpectedExit
+		err = errUnexpectedExit
 	case <-a.t.Dying():
 		err = nil
 	}
@@ -270,7 +270,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("THREADS=%d", DefaultThreads),
+		fmt.Sprintf("THREADS=%d", defaultThreads),
 		"WORKERS=0",
 		"CONFIG=-",
 	)

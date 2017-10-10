@@ -11,7 +11,7 @@ import (
 
 const supportDir = "~/Library/Application Support/io.puma.dev"
 
-func LoginKeyChain() (string, error) {
+func loginKeyChain() (string, error) {
 
 	newKeychainPath := homedir.MustExpand("~/Library/Keychains/login.keychain-db")
 	oldKeychainPath := homedir.MustExpand("~/Library/Keychains/login.keychain")
@@ -27,11 +27,11 @@ func LoginKeyChain() (string, error) {
 	return "", errors.New("Could not find login keychain")
 }
 
-func TrustCert(cert string) error {
+func trustCert(cert string) error {
 	fmt.Printf("* Adding certification to login keychain as trusted\n")
 	fmt.Printf("! There is probably a dialog open that requires you to authenticate\n")
 
-	login, keychainError := LoginKeyChain()
+	login, keychainError := loginKeyChain()
 
 	if keychainError != nil {
 		return keychainError

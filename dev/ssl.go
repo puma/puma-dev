@@ -21,7 +21,7 @@ import (
 	"github.com/vektra/errors"
 )
 
-var CACert *tls.Certificate
+var caCert *tls.Certificate
 
 func SetupOurCert() error {
 	dir := homedir.MustExpand(supportDir)
@@ -36,7 +36,7 @@ func SetupOurCert() error {
 
 	tlsCert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err == nil {
-		CACert = &tlsCert
+		caCert = &tlsCert
 		return nil
 	}
 
@@ -98,7 +98,7 @@ func SetupOurCert() error {
 
 	keyOut.Close()
 
-	return TrustCert(certPath)
+	return trustCert(certPath)
 }
 
 type certCache struct {
@@ -106,7 +106,7 @@ type certCache struct {
 	cache *lru.ARCCache
 }
 
-func NewCertCache() *certCache {
+func newCertCache() *certCache {
 	cache, err := lru.NewARC(1024)
 	if err != nil {
 		panic(err)
@@ -127,7 +127,7 @@ func (c *certCache) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 		return val.(*tls.Certificate), nil
 	}
 
-	cert, err := makeCert(CACert, name)
+	cert, err := makeCert(caCert, name)
 	if err != nil {
 		return nil, err
 	}
