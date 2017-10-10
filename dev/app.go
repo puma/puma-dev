@@ -389,7 +389,7 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 	}
 
 	app.eventAdd("proxy_created",
-		"destination", fmt.Sprintf("%s://%s"), app.Scheme, app.Address())
+		"destination", fmt.Sprintf("%s://%s", app.Scheme, app.Address()))
 
 	fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
 		name, app.Scheme, app.Address())

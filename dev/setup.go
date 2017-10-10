@@ -64,7 +64,7 @@ func Setup() error {
 	}
 
 	if !ok {
-		fmt.Printf("* Configuring %s to be world writable\n")
+		fmt.Printf("* Configuring %s to be world writable\n", etcDir)
 		err := os.Chmod(etcDir, 0777)
 		if err != nil {
 			return err
