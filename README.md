@@ -173,4 +173,4 @@ To build puma-dev, follow these steps:
 * Run `go get github.com/puma/puma-dev/...`
 * Run `$GOPATH/bin/puma-dev` to use your new binary
 
-Puma-dev uses govendor (https://github.com/kardianos/govendor) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `govendor fetch +vendor <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
+Puma-dev uses govendor (https://github.com/kardianos/govendor) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `govendor fetch +vendor <package path>` to pull it into `vendor`. Then you can use it from within `puma-dev/src`
