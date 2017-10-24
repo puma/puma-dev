@@ -16,11 +16,11 @@ import (
 
 var (
 	fDebug    = flag.Bool("debug", false, "enable debug output")
-	fDomains  = flag.String("d", "dev", "domains to handle, separate with :")
-	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
-	fTLSPort  = flag.Int("https-port", 9283, "port to listen on https for")
+	fDomains  = flag.String("d", DefaultDomains, "domains to handle, separate with :")
+	fHTTPPort = flag.Int("http-port", DefaultHttpPort, "port to listen on http for")
+	fTLSPort  = flag.Int("https-port", DefaultTlsPort, "port to listen on https for")
 	fSysBind  = flag.Bool("sysbind", false, "bind to ports 80 and 443")
-	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
+	fDir      = flag.String("dir", DefaultDir, "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
 	fStop     = flag.Bool("stop", false, "Stop all puma-dev servers")
 )
@@ -124,7 +124,7 @@ func parseEnvFlags() {
 		}
 	}
 
-	if *fDomains == "dev" {
+	if *fDomains == DefaultDomains {
 		envVal := os.Getenv("PUMA_DEV_DOMAINS")
 
 		if envVal != "" {
@@ -132,7 +132,7 @@ func parseEnvFlags() {
 		}
 	}
 
-	if *fHTTPPort == 9280 {
+	if *fHTTPPort == DefaultHttpPort {
 		envVal := os.Getenv("PUMA_DEV_HTTP_PORT")
 
 		if envVal != "" {
@@ -140,7 +140,7 @@ func parseEnvFlags() {
 		}
 	}
 
-	if *fTLSPort == 9283 {
+	if *fTLSPort == DefaultTlsPort {
 		envVal := os.Getenv("PUMA_DEV_HTTPS_PORT")
 
 		if envVal != "" {
@@ -148,7 +148,7 @@ func parseEnvFlags() {
 		}
 	}
 
-	if *fDir == "~/.puma-dev" {
+	if *fDir == DefaultDir {
 		envVal := os.Getenv("PUMA_DEV_DIR")
 
 		if envVal != "" {

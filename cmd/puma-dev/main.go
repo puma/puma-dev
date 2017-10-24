@@ -11,6 +11,14 @@ var fVersion = flag.Bool("V", false, "display version info")
 
 var Version = "devel"
 
+const (
+	DefaultDomains  = "dev"
+	DefaultDnsPort  = 9253
+	DefaultHttpPort = 9280
+	DefaultTlsPort  = 9283
+	DefaultDir      = "~/.puma-dev"
+)
+
 func allCheck() {
 	if *fVersion {
 		fmt.Printf("Version: %s (%s)\n", Version, runtime.Version())
