@@ -28,6 +28,8 @@ var (
 func main() {
 	flag.Parse()
 
+	parseEnvFlags()
+
 	allCheck()
 
 	domains := strings.Split(*fDomains, ":")
@@ -111,5 +113,55 @@ func main() {
 	err = http.Serve()
 	if err != nil {
 		log.Fatalf("Error listening: %s", err)
+	}
+}
+
+func parseEnvFlags() {
+	if !*fDebug {
+		envVal := os.Getenv("PUMA_DEV_DEBUG")
+		if envVal != "" {
+			*fDebug = true
+		}
+	}
+
+	if *fDomains == "dev" {
+		envVal := os.Getenv("PUMA_DEV_DOMAINS")
+
+		if envVal != "" {
+			*fDomains = envVal
+		}
+	}
+
+	if *fHTTPPort == 9280 {
+		envVal := os.Getenv("PUMA_DEV_HTTP_PORT")
+
+		if envVal != "" {
+			*fHTTPPort, _ = strconv.Atoi(envVal)
+		}
+	}
+
+	if *fTLSPort == 9283 {
+		envVal := os.Getenv("PUMA_DEV_HTTPS_PORT")
+
+		if envVal != "" {
+			*fTLSPort, _ = strconv.Atoi(envVal)
+		}
+	}
+
+	if *fDir == "~/.puma-dev" {
+		envVal := os.Getenv("PUMA_DEV_DIR")
+
+		if envVal != "" {
+			*fDir = envVal
+		}
+	}
+
+	if *fTimeout == 15*60*time.Second {
+		envVal := os.Getenv("PUMA_DEV_TIMEOUT")
+
+		if envVal != "" {
+			parsedVal, _ := strconv.Atoi(envVal)
+			*fTimeout = time.Duration(parsedVal) * time.Second
+		}
 	}
 }
