@@ -10,7 +10,7 @@ import (
 )
 
 func (h *HTTPServer) ServeTLS(launchdSocket string) error {
-	certCache := NewCertCache()
+	certCache := newCertCache()
 
 	tlsConfig := &tls.Config{
 		GetCertificate: certCache.GetCertificate,
