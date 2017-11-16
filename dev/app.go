@@ -235,10 +235,6 @@ if test -e ~/.powconfig; then
 	source ~/.powconfig
 fi
 
-if test -e .env; then
-	source .env
-fi
-
 if test -e .powrc; then
 	source .powrc
 fi
