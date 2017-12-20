@@ -179,7 +179,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		outreq.Header.Set("X-Forwarded-Proto", "http")
 	}
 
-	if req.Header.Get("Connection") == "Upgrade" &&
+	if strings.Contains(req.Header.Get("Connection"), "Upgrade") &&
 		req.Header.Get("Upgrade") == "websocket" {
 		p.websocketProxy(rw, outreq)
 		return
