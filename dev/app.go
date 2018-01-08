@@ -35,6 +35,7 @@ type App struct {
 	Events  *Events
 
 	lines linebuffer.LineBuffer
+	lastLogLine string
 
 	address string
 	dir     string
@@ -107,6 +108,7 @@ func (a *App) watch() error {
 			line, err := r.ReadString('\n')
 			if line != "" {
 				a.lines.Append(line)
+				a.lastLogLine = line
 				fmt.Fprintf(os.Stdout, "%s[%d]: %s", a.Name, a.Command.Process.Pid, line)
 			}
 
@@ -124,7 +126,7 @@ func (a *App) watch() error {
 	select {
 	case err = <-c:
 		reason = "stdout/stderr closed"
-		err = ErrUnexpectedExit
+		err = fmt.Errorf("%s:\n\t%s", ErrUnexpectedExit, a.lastLogLine)
 	case <-a.t.Dying():
 		err = nil
 	}
