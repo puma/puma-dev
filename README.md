@@ -7,9 +7,11 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 * Easy startup and idle shutdown of rack/rails apps
 * Easy access to the apps using the `.dev` subdomain **(configurable)**
 
-### Why not just use pow?
-
-Pow doesn't support rack.hijack and thus not websockets and thus not actioncable. So for all those new Rails 5 apps, pow is a no-go. Puma-dev fills that hole. Puma-dev also goes one step further and provides zero-config https support to your development environment, as well as offering Linux support.
+### Why choose puma-dev?
+* __https__ - it Just Works!
+* Supports __Rails 5 actioncable__ via rack.hijack websockets
+* Supports Mac __and__ Linux
+* The honorary `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
 
 ## Install
 
@@ -27,7 +29,13 @@ pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manu
 * Puma-dev supports linux but requires additional installation to make all the features work.
 * You can either build from source or download a binary from https://github.com/puma/puma-dev/releases
 
-#### .dev domain
+__Important__
+ * default ports are 80 and 443
+ * default domain is `.dev` (expect this to change)
+   * Don't use .dev and .foo, as they are real domains, owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
+ * Using pow? To avoid conflicts, use different ports and domain or [uninstall pow **correctly**](http://pow.cx/manual.html#section_1.2)  if you've stop using it
+
+#### domains (.dev, .test or similar)
 
 Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make domains resolve.
 
