@@ -1,8 +1,8 @@
-# FSEvents bindings for Go (OS X)
+# FSEvents bindings for Go (macOS)
 
-[![GoDoc](https://godoc.org/github.com/fsnotify/fsevents?status.svg)](https://godoc.org/github.com/fsnotify/fsevents)
+[![GoDoc](https://godoc.org/github.com/fsnotify/fsevents?status.svg)](https://godoc.org/github.com/fsnotify/fsevents) [![Build Status](https://travis-ci.org/fsnotify/fsevents.svg?branch=master)](https://travis-ci.org/fsnotify/fsevents) [![codecov](https://codecov.io/gh/fsnotify/fsevents/branch/master/graph/badge.svg)](https://codecov.io/gh/fsnotify/fsevents)
 
-[FSEvents](https://developer.apple.com/library/mac/documentation/Darwin/Reference/FSEvents_Ref/) allows an application to monitor a whole file system or portion of it. FSEvents is only available on OS X.
+[FSEvents](https://developer.apple.com/library/mac/documentation/Darwin/Reference/FSEvents_Ref/) allows an application to monitor a whole file system or portion of it. FSEvents is only available on macOS.
 
 **Warning:** This API should be considered unstable.
 

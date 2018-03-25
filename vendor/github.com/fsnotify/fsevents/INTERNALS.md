@@ -2,7 +2,7 @@
 
 For those new to FSEvents itself (the Apple technology), here's a really quick primer:
 
-Introduced in OS X v10.5, File System Events is made up of three parts:
+Introduced in macOS v10.5, File System Events is made up of three parts:
 
 * kernel code that passes raw event data to user space through a special device
 * a daemon that filters this stream and sends notifications
@@ -14,7 +14,7 @@ The API uses the concept of a *Stream* (FSEventStream) which is a configurable s
 
 ## Persistent Monitoring
 
-The database kept by the File System Events API allow a program that is run periodically to check for changes to the file system between runs. This has a real impact on the API and why there are parameters like `since`. This feature should be considered *advisory* according to Apple's docs - a full scan should still be run periodically. If an older version of OS X modifies the file system (say, by removing the drive and putting it in another computer) it would not update the database.
+The database kept by the File System Events API allow a program that is run periodically to check for changes to the file system between runs. This has a real impact on the API and why there are parameters like `since`. This feature should be considered *advisory* according to Apple's docs - a full scan should still be run periodically. If an older version of macOS modifies the file system (say, by removing the drive and putting it in another computer) it would not update the database.
 
 The `since` parameter must be an EventID for the host or device that the stream is for (or the special ALL or NOW values).
 
@@ -35,9 +35,9 @@ For real-time monitoring there aren't any notable advantages to a Device Stream 
 
 ## File Events
 
-Is OS X v10.7 Apple introduced *File Events* (kFSEventStreamCreateFlagFileEvents aka CF_FILEEVENTS). Prior to this events are delivered for directories only, i.e. if /tmp/subdir/testfile is modified and an FSEventStream is monitoring /tmp then an event would be delivered for the path /tmp/subdir. This tells the application that it should scan /tmp/subdir for changes. It was also possible (in corner cases) that an event for the path /tmp could be created with MUSTSCANSUBDIRS set. This should only happen if events are being dropped, and had to be coalesced to prevent the loss of information.
+Is macOS v10.7 Apple introduced *File Events* (kFSEventStreamCreateFlagFileEvents aka CF_FILEEVENTS). Prior to this events are delivered for directories only, i.e. if /tmp/subdir/testfile is modified and an FSEventStream is monitoring /tmp then an event would be delivered for the path /tmp/subdir. This tells the application that it should scan /tmp/subdir for changes. It was also possible (in corner cases) that an event for the path /tmp could be created with MUSTSCANSUBDIRS set. This should only happen if events are being dropped, and had to be coalesced to prevent the loss of information.
 
-With CF_FILEEVENTS set (>= OS X v10.7) events are generated with the path specifying the individual files that have been modified. I haven't found explicit mention, but it seems likely that the same caveats apply with respect to coalescing if events are being dropped.
+With CF_FILEEVENTS set (>= macOS v10.7) events are generated with the path specifying the individual files that have been modified. I haven't found explicit mention, but it seems likely that the same caveats apply with respect to coalescing if events are being dropped.
 
 Apple warns that using File Events will cause many more events to be generated (in part, I expect, because they don't coalesce as easily as directory-level events).
 
@@ -61,7 +61,7 @@ Instantiating an `EventStream` just allocates memory to store the *configuration
 
 ### Running a Stream
 
-In OS X an application must run a RunLoop (see: [Run Loop Management][https://developer.apple.com/library/mac/documentation/cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW1]) for each thread that wishes to receive events from the operating system.
+In macOS an application must run a RunLoop (see: [Run Loop Management][https://developer.apple.com/library/mac/documentation/cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW1]) for each thread that wishes to receive events from the operating system.
 
 An FSEventStream needs to be started, and must be supplied with a Runloop reference to deliver events to.
 

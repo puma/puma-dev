@@ -1,41 +1,13 @@
 // +build darwin
 
-// Package fsevents provides file system notifications on OS X.
+// Package fsevents provides file system notifications on macOS.
 package fsevents
 
-/*
-#cgo LDFLAGS: -framework CoreServices
-#include <CoreServices/CoreServices.h>
-#include <sys/stat.h>
-
-static CFArrayRef ArrayCreateMutable(int len) {
-	return CFArrayCreateMutable(NULL, len, &kCFTypeArrayCallBacks);
-}
-
-extern void fsevtCallback(FSEventStreamRef p0, uintptr_t info, size_t p1, char** p2, FSEventStreamEventFlags* p3, FSEventStreamEventId* p4);
-
-static FSEventStreamRef EventStreamCreateRelativeToDevice(FSEventStreamContext * context, uintptr_t info, dev_t dev, CFArrayRef paths, FSEventStreamEventId since, CFTimeInterval latency, FSEventStreamCreateFlags flags) {
-	context->info = (void*) info;
-	return FSEventStreamCreateRelativeToDevice(NULL, (FSEventStreamCallback) fsevtCallback, context, dev, paths, since, latency, flags);
-}
-
-static FSEventStreamRef EventStreamCreate(FSEventStreamContext * context, uintptr_t info, CFArrayRef paths, FSEventStreamEventId since, CFTimeInterval latency, FSEventStreamCreateFlags flags) {
-	context->info = (void*) info;
-	return FSEventStreamCreate(NULL, (FSEventStreamCallback) fsevtCallback, context, paths, since, latency, flags);
-}
-*/
-import "C"
 import (
-	"path/filepath"
-	"runtime"
 	"sync"
 	"syscall"
 	"time"
-	"unsafe"
 )
-
-// EventIdSinceNow is a sentinel to begin watching events "since now".
-const EventIDSinceNow = uint64(C.kFSEventStreamEventIdSinceNow + (1 << 64))
 
 // CreateFlags for creating a New stream.
 type CreateFlags uint32
@@ -52,11 +24,11 @@ const (
 	// WatchRoot for a change to occur to a directory along the path being watched.
 	WatchRoot
 
-	// IgnoreSelf doesn't send events triggered by the current process (OS X 10.6+).
+	// IgnoreSelf doesn't send events triggered by the current process (macOS 10.6+).
 	IgnoreSelf
 
 	// FileEvents sends events about individual files, generating significantly
-	// more events (OS X 10.7+) than directory level notifications.
+	// more events (macOS 10.7+) than directory level notifications.
 	FileEvents
 )
 
@@ -108,38 +80,6 @@ type Event struct {
 	ID    uint64
 }
 
-//export fsevtCallback
-func fsevtCallback(stream C.FSEventStreamRef, info uintptr, numEvents C.size_t, paths **C.char, flags *C.FSEventStreamEventFlags, ids *C.FSEventStreamEventId) {
-	events := make([]Event, int(numEvents))
-
-	es := registry.Get(info)
-	if es == nil {
-		return
-	}
-
-	for i := 0; i < int(numEvents); i++ {
-		cpaths := uintptr(unsafe.Pointer(paths)) + (uintptr(i) * unsafe.Sizeof(*paths))
-		cpath := *(**C.char)(unsafe.Pointer(cpaths))
-
-		cflags := uintptr(unsafe.Pointer(flags)) + (uintptr(i) * unsafe.Sizeof(*flags))
-		cflag := *(*C.FSEventStreamEventFlags)(unsafe.Pointer(cflags))
-
-		cids := uintptr(unsafe.Pointer(ids)) + (uintptr(i) * unsafe.Sizeof(*ids))
-		cid := *(*C.FSEventStreamEventId)(unsafe.Pointer(cids))
-
-		events[i] = Event{Path: C.GoString(cpath), Flags: EventFlags(cflag), ID: uint64(cid)}
-		// Record the latest EventID to support resuming the stream
-		es.EventID = uint64(cid)
-	}
-
-	es.Events <- events
-}
-
-// LatestEventID returns the most recently generated event ID, system-wide.
-func LatestEventID() uint64 {
-	return uint64(C.FSEventsGetCurrentEventId())
-}
-
 // DeviceForPath returns the device ID for the specified volume.
 func DeviceForPath(path string) (int32, error) {
 	stat := syscall.Stat_t{}
@@ -149,30 +89,20 @@ func DeviceForPath(path string) (int32, error) {
 	return stat.Dev, nil
 }
 
-// EventIDForDeviceBeforeTime returns an event ID before a given time.
-func EventIDForDeviceBeforeTime(dev int32, before time.Time) uint64 {
-	tm := C.CFAbsoluteTime(before.Unix())
-	return uint64(C.FSEventsGetLastEventIdForDeviceBeforeTime(C.dev_t(dev), tm))
-}
-
-/*
-
-	Primary EventStream interface.
-	You can provide your own event channel if you wish (or one will be created
-	on Start).
-
-	es := &EventStream{Paths: []string{"/tmp"}, Flags: 0}
-	es.Start()
-	es.Stop()
-
-*/
-
-// EventStream is the primary interface to FSEvents.
+// EventStream is the primary interface to FSEvents
+// You can provide your own event channel if you wish (or one will be
+// created on Start).
+//
+//   es := &EventStream{Paths: []string{"/tmp"}, Flags: 0}
+//   es.Start()
+//   es.Stop()
+//   ...
 type EventStream struct {
-	stream       C.FSEventStreamRef
-	rlref        C.CFRunLoopRef
+	stream       FSEventStreamRef
+	rlref        CFRunLoopRef
 	hasFinalizer bool
 	registryID   uintptr
+	uuid         string
 
 	Events  chan []Event
 	Paths   []string
@@ -180,7 +110,8 @@ type EventStream struct {
 	EventID uint64
 	Resume  bool
 	Latency time.Duration
-	Device  int32
+	// syscall represents this with an int32
+	Device int32
 }
 
 // eventStreamRegistry is a lookup table for EventStream references passed to
@@ -188,8 +119,8 @@ type EventStream struct {
 // To get around this issue, we pass only an integer.
 type eventStreamRegistry struct {
 	sync.Mutex
-	m map[uintptr]*EventStream
-	i uintptr
+	m      map[uintptr]*EventStream
+	lastID uintptr
 }
 
 var registry = eventStreamRegistry{m: map[uintptr]*EventStream{}}
@@ -198,9 +129,9 @@ func (r *eventStreamRegistry) Add(e *EventStream) uintptr {
 	r.Lock()
 	defer r.Unlock()
 
-	r.i++
-	r.m[r.i] = e
-	return r.i
+	r.lastID++
+	r.m[r.lastID] = e
+	return r.lastID
 }
 
 func (r *eventStreamRegistry) Get(i uintptr) *EventStream {
@@ -217,83 +148,34 @@ func (r *eventStreamRegistry) Delete(i uintptr) {
 	delete(r.m, i)
 }
 
-func finalizer(es *EventStream) {
-	// If an EventStream is freed without Stop being called it will
-	// cause a panic. This avoids that, and closes the stream instead.
-	es.Stop()
-}
-
 // Start listening to an event stream.
 func (es *EventStream) Start() {
-	cPaths := C.ArrayCreateMutable(C.int(len(es.Paths)))
-	defer C.CFRelease(C.CFTypeRef(cPaths))
-
-	for _, p := range es.Paths {
-		p, _ = filepath.Abs(p)
-		cpath := C.CString(p)
-		defer C.free(unsafe.Pointer(cpath))
-
-		str := C.CFStringCreateWithCString(nil, cpath, C.kCFStringEncodingUTF8)
-		C.CFArrayAppendValue(cPaths, unsafe.Pointer(str))
-	}
-
-	since := C.FSEventStreamEventId(EventIDSinceNow)
-	if es.Resume {
-		since = C.FSEventStreamEventId(es.EventID)
-	}
-
 	if es.Events == nil {
 		es.Events = make(chan []Event)
 	}
 
-	es.registryID = registry.Add(es)
-	context := C.FSEventStreamContext{}
-	info := C.uintptr_t(es.registryID)
-	latency := C.CFTimeInterval(float64(es.Latency) / float64(time.Second))
-	if es.Device != 0 {
-		es.stream = C.EventStreamCreateRelativeToDevice(&context, info, C.dev_t(es.Device), cPaths, since, latency, C.FSEventStreamCreateFlags(es.Flags))
-	} else {
-		es.stream = C.EventStreamCreate(&context, info, cPaths, since, latency, C.FSEventStreamCreateFlags(es.Flags))
-	}
-
-	started := make(chan struct{})
-
-	go func() {
-		runtime.LockOSThread()
-		es.rlref = C.CFRunLoopGetCurrent()
-		C.FSEventStreamScheduleWithRunLoop(es.stream, es.rlref, C.kCFRunLoopDefaultMode)
-		C.FSEventStreamStart(es.stream)
-		close(started)
-		C.CFRunLoopRun()
-	}()
-
-	if !es.hasFinalizer {
-		runtime.SetFinalizer(es, finalizer)
-		es.hasFinalizer = true
-	}
-
-	<-started
+	// register eventstream in the local registry for later lookup
+	// in C callback
+	cbInfo := registry.Add(es)
+	es.registryID = cbInfo
+	es.uuid = GetDeviceUUID(es.Device)
+	es.start(es.Paths, cbInfo)
 }
 
 // Flush events that have occurred but haven't been delivered.
 func (es *EventStream) Flush(sync bool) {
-	if sync {
-		C.FSEventStreamFlushSync(es.stream)
-	} else {
-		C.FSEventStreamFlushAsync(es.stream)
-	}
+	flush(es.stream, sync)
 }
 
 // Stop listening to the event stream.
 func (es *EventStream) Stop() {
 	if es.stream != nil {
-		C.FSEventStreamStop(es.stream)
-		C.FSEventStreamInvalidate(es.stream)
-		C.FSEventStreamRelease(es.stream)
-		C.CFRunLoopStop(es.rlref)
-		registry.Delete(es.registryID)
+		stop(es.stream, es.rlref)
+		es.stream = nil
 	}
-	es.stream = nil
+
+	// Remove eventstream from the registry
+	registry.Delete(es.registryID)
 	es.registryID = 0
 }
 
