@@ -5,8 +5,8 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 ## Highlights
 
 * Easy startup and idle shutdown of rack/rails apps
-* Easy access to the apps using the `.dev` subdomain **(configurable)**
-* Run multiple custom domains at the same time, e.g. `.dev` * `.test`.
+* Easy access to the apps using the `.test` subdomain **(configurable)**
+* Run multiple custom domains at the same time, e.g. `.test` * `.puma`.
 
 ### Why choose puma-dev?
 * __https__ - it Just Works!
@@ -14,13 +14,13 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 * Supports Mac __and__ Linux
 * The honorary `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
 
-## Install
+## Install on macOS
 
 * Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
 * Or download the latest release from https://github.com/puma/puma-dev/releases
 * If you haven't run puma-dev before, run: `sudo puma-dev -setup` to configure some DNS settings that have to be done as root
-* Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
-  * If you're currently using pow, puma-dev taking control of `.dev` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
+* Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.test`.
+  * If you're currently using pow, puma-dev taking control of `.test` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
 
 *NOTE:* if you had pow installed before in the system, please make sure to run
 pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
@@ -30,13 +30,7 @@ pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manu
 * Puma-dev supports linux but requires additional installation to make all the features work.
 * You can either build from source or download a binary from https://github.com/puma/puma-dev/releases
 
-__Important__
- * default ports are 80 and 443
- * default domain is `.dev` (expect this to change)
-   * Don't use .dev and .foo, as they are real domains, owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
- * Using pow? To avoid conflicts, use different ports and domain or [uninstall pow **correctly**](http://pow.cx/manual.html#section_1.2)  if you've stop using it
-
-#### domains (.dev, .test or similar)
+#### Domains (.test or similar)
 
 Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make domains resolve.
 
@@ -50,6 +44,13 @@ There are 2 options to allow puma-dev to listen on port 80 and 443.
 You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
 
 There is a shortcut for binding to 80/443 by passing `-sysbind` which overrides `-http-port` and `-https-port`.
+
+### Important Note On Ports and Domain Names
+
+* Default ports are 80 and 443
+* Default domain is `.test`. Previously it was `.dev`, but it is owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
+  * Don't use .dev and .foo, as they are real domains
+* Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](http://pow.cx/manual.html#section_1.2).
 
 ### Options
 
@@ -83,13 +84,13 @@ If you wish to have `puma-dev` use a port other than 80, pass it via the `-insta
 
 Run: `puma-dev`
 
-Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s /path/to/my/app test`. You can now access your app as `test.dev`.
+Puma-dev will startup by default using the directory `~/.puma-dev`, looking for symlinks to apps just like pow. Drop a symlink to your app in there as: `cd ~/.puma-dev; ln -s /path/to/my/app test`. You can now access your app as `test.test`.
 
 Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
 ### Coming from Pow
 
-By default, puma-dev uses the domain `.dev` to manage your apps. If you want to have puma-dev look for apps in `~/.pow`, just run `puma-dev -pow`.
+By default, puma-dev uses the domain `.test` to manage your apps. If you want to have puma-dev look for apps in `~/.pow`, just run `puma-dev -pow`.
 
 ## Configuration
 
@@ -123,7 +124,7 @@ Simply symlink your apps directory into `~/.puma-dev`! That's it!
 
 Puma-dev can also proxy requests from a nice dev domain to another app. To do so, just write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
 
-For example, to have port 9292 show up as `awesome.dev`: `echo 9292 > ~/.puma-dev/awesome`.
+For example, to have port 9292 show up as `awesome.test`: `echo 9292 > ~/.puma-dev/awesome`.
 
 Or to proxy to another host: `echo 10.3.1.2:9292 > ~/.puma-dev/awesome-elsewhere`.
 
@@ -133,7 +134,7 @@ Puma-dev automatically makes the apps available via SSL as well. When you first 
 
 That CA cert is used to dynamically create certificates for your apps when access to them is requested. It automatically happens, no configuration necessary. The certs are stored entirely in memory so future restarts of puma-dev simply generate new ones.
 
-When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.dev` to access your app via https.
+When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.test` to access your app via https.
 
 ### OS X Logging
 
@@ -149,7 +150,7 @@ In the case of rails, you need to configure rails to allow all websockets or web
 
 *Do not use disable_request_forgery_protection in production!*
 
-Or you can add something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
+Or you can add something like `config.action_cable.allowed_request_origins = /(\.test$)|^localhost$/` to allow anything under `.test` as well as `localhost`.
 
 ### xip.io
 
