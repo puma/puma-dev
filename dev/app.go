@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -462,7 +463,35 @@ func (a *AppPool) App(name string) (*App, error) {
 	destPath, _ := os.Readlink(path)
 
 	if err != nil {
-		if os.IsNotExist(err) {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		// Check there might be a link there but it's not valid
+		_, err := os.Lstat(path)
+		if err == nil {
+			fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, destPath)
+			a.Events.Add("bad_symlink", "path", path, "dest", destPath)
+		}
+
+		// If possible, also try expanding - to / to allow for apps in subdirs
+		possible := strings.Replace(name, "-", "/", -1)
+		if possible == name {
+			return nil, ErrUnknownApp
+		}
+
+		path = filepath.Join(a.Dir, possible)
+
+		a.Events.Add("app_lookup", "path", path)
+
+		stat, err = os.Stat(path)
+		destPath, _ = os.Readlink(path)
+
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return nil, err
+			}
+
 			// Check there might be a link there but it's not valid
 			_, err := os.Lstat(path)
 			if err == nil {
@@ -472,8 +501,6 @@ func (a *AppPool) App(name string) (*App, error) {
 
 			return nil, ErrUnknownApp
 		}
-
-		return nil, err
 	}
 
 	canonicalName := name

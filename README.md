@@ -120,6 +120,10 @@ Run: `puma-dev -uninstall`
 
 Simply symlink your apps directory into `~/.puma-dev`! That's it!
 
+### Sub Directories
+
+If you have a more complex set of applications you want puma-dev to manage, you can use subdirectories under `~/.puma-dev` as well. This works by naming the app with a hyphen (`-`) where you'd have a slash (`/`) in the hostname. So for instance if you access `cool-frontend.test`, puma-dev will look for `~/.puma-dev/cool-frontend` and if it finds nothing, try `~/.puma-dev/cool/frontend`.
+
 ### Proxy support
 
 Puma-dev can also proxy requests from a nice dev domain to another app. To do so, just write a file (rather than a symlink'd directory) into `~/.puma-dev` with the connection information.
