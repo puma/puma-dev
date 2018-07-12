@@ -16,10 +16,10 @@
 			"revisionTime": "2016-02-21T10:44:43Z"
 		},
 		{
-			"checksumSHA1": "izWnjg9a1oBPY4UBMi2REorBm68=",
+			"checksumSHA1": "xX//krtGgN0I1hxToLTIJlu11g8=",
 			"path": "github.com/fsnotify/fsevents",
-			"revision": "8b9e69e6c151001d0eb8a7cf37583265dfc6d6e4",
-			"revisionTime": "2016-05-19T18:46:26Z"
+			"revision": "ed9a50f8badcd11817e4fa3044b6765bb54219db",
+			"revisionTime": "2018-02-23T06:02:18Z"
 		},
 		{
 			"checksumSHA1": "d9PxF1XQGLMJZRct2R8qVM/eYlE=",
