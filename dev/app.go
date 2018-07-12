@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/puma/puma-dev/linebuffer"
@@ -86,7 +87,7 @@ func (a *App) Kill(reason string) error {
 	)
 
 	fmt.Printf("! Killing '%s' (%d)\n", a.Name, a.Command.Process.Pid)
-	err := a.Command.Process.Kill()
+	err := a.Command.Process.Signal(syscall.SIGTERM)
 	if err != nil {
 		a.eventAdd("killing_error",
 			"pid", a.Command.Process.Pid,
