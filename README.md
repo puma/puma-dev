@@ -6,6 +6,7 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 * Easy startup and idle shutdown of rack/rails apps
 * Easy access to the apps using the `.dev` subdomain **(configurable)**
+* Run multiple custom domains at the same time, e.g. `.dev` * `.test`.
 
 ### Why choose puma-dev?
 * __https__ - it Just Works!
@@ -153,6 +154,10 @@ Or you can add something like `config.action_cable.allowed_request_origins = /(\
 ### xip.io
 
 Puma-dev supports `xip.io` domains. It will detect them and strip them away, so that your `test` app can be accessed as `test.A.B.C.D.xip.io`.
+
+### Run multiple domains
+
+Puma-dev allows you to run multiple local domains. Handy if you're working with more than one client. Simply set up puma-dev like so: `puma-dev -install -d first-domain:second-domain`
 
 ### Static file support
 
