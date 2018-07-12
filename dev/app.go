@@ -36,7 +36,7 @@ type App struct {
 	Public  bool
 	Events  *Events
 
-	lines linebuffer.LineBuffer
+	lines       linebuffer.LineBuffer
 	lastLogLine string
 
 	address string
