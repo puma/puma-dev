@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -267,6 +268,11 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
 
 	shell := os.Getenv("SHELL")
+
+	if shell == "" {
+		log.Printf("[WARN] SHELL env var not set, using /bin/bash by default")
+		shell = "/bin/bash"
+	}
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
 		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
