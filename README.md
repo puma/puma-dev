@@ -96,6 +96,7 @@ By default, puma-dev uses the domain `.test` to manage your apps. If you want to
 
 Puma-dev supports loading environment variables before puma starts. It checks for the following files in this order:
 
+* `~/.powconfig`
 * `.env`
 * `.powrc`
 * `.powenv`
