@@ -8,4 +8,7 @@ release:
 	mv puma-dev_darwin_amd64 puma-dev
 	zip puma-dev-$$RELEASE-darwin-amd64.zip puma-dev
 
+test:
+	go test -v ./...
+
 .PHONY: all release
