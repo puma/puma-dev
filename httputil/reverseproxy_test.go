@@ -432,3 +432,19 @@ func TestReverseProxy_Post(t *testing.T) {
 		t.Errorf("got body %q; expected %q", g, e)
 	}
 }
+
+func NewSingleHostReverseProxy(target *url.URL) *ReverseProxy {
+	targetQuery := target.RawQuery
+	director := func(res http.ResponseWriter, req *http.Request) error {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+		return nil
+	}
+	return &ReverseProxy{Proxy: director}
+}
