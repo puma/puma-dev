@@ -1,6 +1,8 @@
 package dev
 
 import (
+	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -75,13 +77,20 @@ func (d *DNSResponder) Serve(domains []string) error {
 	go func() {
 		defer wg.Done()
 		server := &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
-		server.ListenAndServe()
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatalf("Error serving udp DNS requests: %s", err)
+		}
+
 	}()
 
 	go func() {
 		defer wg.Done()
 		server := &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
-		server.ListenAndServe()
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatalf("Error serving tcp DNS requests: %s", err)
+		}
 	}()
 
 	wg.Wait()
