@@ -488,7 +488,7 @@ func (a *AppPool) App(name string) (*App, error) {
 		destPath, _ = os.Readlink(path)
 
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !os.IsNotExist(err) && err.Error() != "not a directory" {
 				return nil, err
 			}
 
