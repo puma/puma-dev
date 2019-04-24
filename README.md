@@ -16,6 +16,8 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 ## Install on macOS
 
+First, install the [`puma`](https://github.com/puma/puma) gem.
+
 * Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
 * Or download the latest release from https://github.com/puma/puma-dev/releases
 * If you haven't run puma-dev before, run: `sudo puma-dev -setup` to configure some DNS settings that have to be done as root
