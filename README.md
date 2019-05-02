@@ -88,6 +88,10 @@ Puma-dev will startup by default using the directory `~/.puma-dev`, looking for 
 
 Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
+### Restart server
+
+Run: `touch tmp/restart.txt` on '/path/to/my/app test'. 
+
 ### Coming from Pow
 
 By default, puma-dev uses the domain `.test` to manage your apps. If you want to have puma-dev look for apps in `~/.pow`, just run `puma-dev -pow`.
