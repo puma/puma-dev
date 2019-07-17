@@ -107,6 +107,10 @@ Additionally, puma-dev uses a few environment variables to control how puma is s
 * `THREADS`: How many threads puma should use concurrently. Defaults to 5.
 * `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
 
+## Restarting
+
+If you would like to have puma-dev restart the current app, you can run `touch tmp/restart.txt` in that apps directory.
+
 ## Purging
 
 If you would like to have puma-dev stop all the apps (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
