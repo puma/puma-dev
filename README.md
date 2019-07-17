@@ -194,6 +194,7 @@ To build puma-dev, follow these steps:
 
 * Install golang (http://golang.org)
 * Run `go get github.com/puma/puma-dev/...`
+* Run `go get github.com/vektra/errors/...`
 * Run `$GOPATH/bin/puma-dev` to use your new binary
 
 Puma-dev uses gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
