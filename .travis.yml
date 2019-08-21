@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - "1.10.x"
+  - master
+
+os:
+  - linux
+  - osx
+
+install:
+  - go get -t ./...
+
+script:
+  - make test

@@ -298,36 +298,6 @@ func req(t *testing.T, v string) *http.Request {
 	return req
 }
 
-// Issue 12344
-func TestNilBody(t *testing.T) {
-	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hi"))
-	}))
-	defer backend.Close()
-
-	frontend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		backURL, _ := url.Parse(backend.URL)
-		rp := NewSingleHostReverseProxy(backURL)
-		r := req(t, "GET / HTTP/1.0\r\n\r\n")
-		r.Body = nil // this accidentally worked in Go 1.4 and below, so keep it working
-		rp.ServeHTTP(w, r)
-	}))
-	defer frontend.Close()
-
-	res, err := http.Get(frontend.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer res.Body.Close()
-	slurp, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(slurp) != "hi" {
-		t.Errorf("Got %q; want %q", slurp, "hi")
-	}
-}
-
 type bufferPool struct {
 	get func() []byte
 	put func([]byte)
@@ -431,4 +401,20 @@ func TestReverseProxy_Post(t *testing.T) {
 	if g, e := string(bodyBytes), backendResponse; g != e {
 		t.Errorf("got body %q; expected %q", g, e)
 	}
+}
+
+func NewSingleHostReverseProxy(target *url.URL) *ReverseProxy {
+	targetQuery := target.RawQuery
+	director := func(res http.ResponseWriter, req *http.Request) error {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+		return nil
+	}
+	return &ReverseProxy{Proxy: director}
 }
