@@ -16,29 +16,53 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 * Supports Mac __and__ Linux
 * The honorary `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
 
-## Install on macOS
+## Installation
+First, ensure that the [`puma`](https://github.com/puma/puma) gem is installed.
 
-First, install the [`puma`](https://github.com/puma/puma) gem.
 
-* Via Homebrew is the easiest: `brew install puma/puma/puma-dev`
-* Or download the latest release from https://github.com/puma/puma-dev/releases
-* If you haven't run puma-dev before, run: `sudo puma-dev -setup` to configure some DNS settings that have to be done as root
-* Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.test`.
-  * If you're currently using pow, puma-dev taking control of `.test` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
+### Homebrew on macOS
+`brew install puma/puma/puma-dev`
 
-*NOTE:* if you had pow installed before in the system, please make sure to run
-pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
+### Pre-built Binaries
 
-### Install on Linux
+You may download binaries for macOS and Linux at [https://github.com/puma/puma-dev/releases](https://github.com/puma/puma-dev/releases)
 
-* Puma-dev supports linux but requires additional installation to make all the features work.
-* You can either build from source or download a binary from https://github.com/puma/puma-dev/releases
+### Build from Source
 
-#### Domains (.test or similar)
+```shell
+#!/usr/bin/env bash
+
+go version
+
+go get github.com/puma/puma-dev/...
+cd $GOPATH/src/github.com/puma/puma-dev/
+make && make install
+
+$GOBIN/puma-dev -V
+```
+
+## macOS Support
+
+```shell
+# Configure puma-dev to run in the background on ports 80 and 443 with the domain `.test`.
+puma-dev -install
+# Configure some DNS settings that have to be done as root
+sudo puma-dev -setup
+```
+
+If you're currently using `pow`, puma-dev taking control of `.test` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use the `.pdev` as an alternate development TLD.
+
+*NOTE:* If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
+
+## Linux Support
+
+Puma-dev supports Linux but requires additional installation to make all the features work (e.g. Add `$HOME/.puma-dev-ssl/cert.pem` to your browser to trust CA.)
+
+### Alternate Domains (.test or similar)
 
 Install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver) to make domains resolve.
 
-#### Port 80/443 binding
+### Port 80/443 binding
 
 There are 2 options to allow puma-dev to listen on port 80 and 443.
 
