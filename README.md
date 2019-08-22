@@ -112,7 +112,7 @@ Run: `puma-dev -h`
 
 You have the ability to configure most of the values that you'll use day-to-day.
 
-## Advanced Configuration
+### Advanced Configuration
 
 Puma-dev supports loading environment variables before puma starts. It checks for the following files in this order:
 
@@ -127,7 +127,7 @@ Additionally, puma-dev uses a few environment variables to control how puma is s
 * `THREADS`: How many threads puma should use concurrently. Defaults to 5.
 * `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
 
-## Important Note On Ports and Domain Names
+### Important Note On Ports and Domain Names
 
 * Default privileged ports are 80 and 443
 * Default domain is `.test`.
@@ -135,11 +135,11 @@ Additionally, puma-dev uses a few environment variables to control how puma is s
   * Don't use `.dev` and `.foo`, as they are real TLDs.
 * Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](http://pow.cx/manual.html#section_1.2).
 
-## Restarting
+### Restarting
 
 If you would like to have puma-dev restart *a specific app*, you can run `touch tmp/restart.txt` in that app's directory.
 
-## Purging
+### Purging
 
 If you would like to have puma-dev stop *all the apps* (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
@@ -217,12 +217,6 @@ The status includes:
   * If it is booting, running, or dead
   * The directory of the app
   * The last 1024 lines the app output
-
-## Subcommands
-
-### `puma-dev link [-n name] [dir]`
-
-Creates links to app directories into your puma-dev directory (`~/.puma-dev` by default).
 
 ## Development
 
