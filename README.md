@@ -21,7 +21,7 @@ First, ensure that the [`puma`](https://github.com/puma/puma) gem is installed. 
 
 ```ruby
 # Gemfile
-gem 'puma', '~> 4.1.0'
+gem 'puma'
 ```
 
 ### Homebrew on macOS
