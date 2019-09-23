@@ -14,7 +14,7 @@ var Version = "devel"
 func allCheck() {
 	if *fVersion {
 		fmt.Printf("Version: %s (%s)\n", Version, runtime.Version())
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	if flag.NArg() > 0 {
