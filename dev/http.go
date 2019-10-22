@@ -147,7 +147,7 @@ func (h *HTTPServer) removeTLD(host string) string {
 		}
 	}
 
-	if strings.HasSuffix(host, ".xip.io") {
+	if strings.HasSuffix(host, ".xip.io") || strings.HasSuffix(host, ".nip.io") {
 		parts := strings.Split(host, ".")
 		if len(parts) < 6 {
 			return ""
