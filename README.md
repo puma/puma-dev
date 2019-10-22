@@ -232,9 +232,9 @@ In the case of rails, you need to configure rails to allow all websockets or web
 
 Or you can add something like `config.action_cable.allowed_request_origins = /(\.test$)|^localhost$/` to allow anything under `.test` as well as `localhost`.
 
-### xip.io
+### xip.io/nip.io
 
-Puma-dev supports `xip.io` domains. It will detect them and strip them away, so that your `test` app can be accessed as `test.A.B.C.D.xip.io`.
+Puma-dev supports `xip.io` and `nip.io` domains. It will detect them and strip them away, so that your `test` app can be accessed as `test.A.B.C.D.xip.io`.
 
 ### Run multiple domains
 
