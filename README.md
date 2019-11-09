@@ -78,26 +78,65 @@ When puma-dev is installed as a user agent (the default mode), it will log outpu
 
 In the future, puma-dev will provide an integrated console for this log output.
 
-------------
+------
 
 ## Linux Support
 
-Puma-dev supports Linux but requires additional installation to make all the features work. For example, `-install` and `-setup` flags for Linux are not provided, puma-dev root CA is generated but not installed or trusted.
+Puma-dev supports Linux but requires the following additional installation steps to be followed to make all the features work (`-install` and `-setup` flags for Linux are not provided):
 
-### Alternate Domains (.test or similar)
+### puma-dev root CA
 
-Install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver) to make domains resolve.
+The puma-dev root CA is generated (in `~/.puma-dev-ssl/`), but you will need to install and trust this as a Certificate Authority.
+
+### Domains (.test or similar)
+
+In order for requests to the `.test` (or any other custom) domain to resolve, install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver), making sure to use `test` (or the custom TLD you want to use) when configuring TLDs.
 
 ### Port 80/443 binding
 
-There are 2 options to allow puma-dev to listen on port 80 and 443.
+Linux prevents applications from binding to ports lower that 1024 by default. You don't need to bind to port 80/443 to use puma-dev but it makes using the `.test` domain much nicer (e.g. you'll be able to use the domain as-is in your browser rather than providing a port number)
 
-1. `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
-2. Use `authbind`.
+There are 2 options to allow puma-dev to listen on port 80 and 443:
 
-You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
+1. Give puma-dev the capabilities directly:
+  ```shell
+  sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev
+  ```
+or
+2. Install `authbind`. and invoke puma-dev with it when you want to use it e.g.
+  ```shell
+  authbind puma-dev -http-port 80 -https-port 443
+  ```
 
-There is a shortcut for binding to 80/443 by passing `-sysbind` which overrides `-http-port` and `-https-port`.
+There is a shortcut for binding to 80/443 by passing `-sysbind` to puma-dev when starting, which overrides `-http-port` and `-https-port`.
+
+### Systemd (running puma-dev in the background)
+
+On Linux, puma-dev will not automatically run in the background (as per the MacOS `-install` script); you'll need to [run it in the foreground](#running-in-the-foreground). You can set up a system daemon to start up puma-dev in the background yourself.
+
+1. Create `/lib/systemd/system/puma-dev.service` and put in the following:
+  ```
+  [Unit]
+  After=network.target
+
+  [Service]
+  User=$USER
+  ExecStart=/path/to/puma-dev -sysbind
+  Restart=on-failure
+
+  [Install]
+  WantedBy=multi-user.target
+  ```
+
+  Replace `path/to/puma-dev` with an absolute path to puma-dev
+  Replace the `$USER` variable with the name of the user you want to run under.
+
+2. Start puma-dev using systemd:
+  ```shell
+  sudo systemctl daemon-reload
+  sudo systemctl enable puma-dev
+  sudo systemctl start puma-dev
+  ```
 
 ------
 
