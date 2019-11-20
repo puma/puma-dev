@@ -86,7 +86,7 @@ Puma-dev supports Linux but requires the following additional installation steps
 
 ### puma-dev root CA
 
-The puma-dev root CA is generated (in `~/.puma-dev-ssl/`), but you will need to install and trust this as a Certificate Authority.
+The puma-dev root CA is generated (in `~/.puma-dev-ssl/`), but you will need to install and trust this as a Certificate Authority by adding it to your operating system's certificate trust store, or by trusting it directly in your favored browser (as some browsers will not share the operating system's trust store).
 
 ### Domains (.test or similar)
 
