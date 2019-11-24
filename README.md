@@ -267,3 +267,23 @@ To build puma-dev, follow these steps:
 * Run `$GOPATH/bin/puma-dev` to use your new binary
 
 Puma-dev uses [govendor](https://github.com/kardianos/govendor) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `govendor fetch +vendor <package path>` to pull it into `vendor`. Then you can use it from within `puma-dev/src`
+
+### Releasing & Homebrew
+
+```shell
+go get -u github.com/mitchellh/gox
+go get -u github.com/tcnksm/ghr
+
+export OWNER="puma"
+export REPO="puma-dev"
+export RELEASE="0.13"
+export GITHUB_TOKEN="$GITHUB_API_TOKEN"
+
+make release
+
+git tag -f "v${RELEASE}"
+git push origin "v${RELEASE}"
+
+ghr -u $OWNER  -t $GITHUB_TOKEN -r $REPO  -n "v${RELEASE}" -delete -prerelease "v${RELEASE}" ./pkg/
+```
+
