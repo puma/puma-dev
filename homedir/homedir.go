@@ -1,3 +1,5 @@
+// https://github.com/mitchellh/go-homedir
+
 package homedir
 
 import (
