@@ -275,7 +275,7 @@ This script compiles Darwin and Linux binaries, creates a release tag, and uploa
 ```shell
 # Gox is a "A dead simple, no frills Go cross compile tool." It's used inside `make release`.
 go get -u github.com/mitchellh/gox
-# Ghr can be used to "Upload multiple artifacts to GitHub Release in parallel".
+# Ghr can be used to "Upload multiple artifacts to GitHub Release in parallel."
 go get -u github.com/tcnksm/ghr
 
 export OWNER="puma"
