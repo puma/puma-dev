@@ -16,14 +16,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestStdoutCapture(t *testing.T) {
-	output := WithStdoutCaptured(func() {
-		fmt.Print("Hello World!")
-	})
-
-	assert.Equal(t, "Hello World!", output)
-}
-
 func TestCommand_noCommandArg(t *testing.T) {
 	StubFlagArgs(nil)
 	err := command()
