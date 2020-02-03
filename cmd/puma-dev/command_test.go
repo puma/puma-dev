@@ -33,7 +33,7 @@ func TestCommand_link_noArgs(t *testing.T) {
 
 	appDir, _ := homedir.Expand("~/my-test-puma-dev-application")
 
-	WithWorkingDirectory(appDir, true, func() {
+	WithWorkingDirectory(appDir, func() {
 		actual := WithStdoutCaptured(func() {
 			if err := command(); err != nil {
 				assert.Fail(t, err.Error())
@@ -52,7 +52,7 @@ func TestCommand_link_withNameOverride(t *testing.T) {
 
 	StubFlagArgs([]string{"link", "-n", "anothername", tmpCwd})
 
-	WithWorkingDirectory(tmpCwd, true, func() {
+	WithWorkingDirectory(tmpCwd, func() {
 		actual := WithStdoutCaptured(func() {
 			if err := command(); err != nil {
 				assert.Fail(t, err.Error())

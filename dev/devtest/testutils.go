@@ -56,7 +56,11 @@ func WithStdoutCaptured(f func()) string {
 
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+
+		if _, err := io.Copy(&buf, r); err != nil {
+			panic(err)
+		}
+
 		outC <- buf.String()
 	}()
 
@@ -85,21 +89,30 @@ func MakeDirectoryOrFail(t *testing.T, path string) string {
 }
 
 // WithWorkingDirectory executes the passed function within the context of
-// the passed working directory path.
-func WithWorkingDirectory(path string, mkdir bool, f func()) {
-	// deleteDirectoryAfterwards := false
+// the passed working directory path. If the directory does not exist,
+// WithWorkingDirectory will attempt to create it.
+func WithWorkingDirectory(path string, f func()) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if mkdir == true {
-			os.Mkdir(path, 0755)
-		} else {
+		if err := os.MkdirAll(path, 0755); err != nil {
 			panic(err)
 		}
 	}
 
-	originalPath, _ := os.Getwd()
-	os.Chdir(path)
+	originalPath, err := os.Getwd()
+
+	if err != nil {
+		panic(err)
+	}
+
+	if err := os.Chdir(path); err != nil {
+		panic(err)
+	}
+
 	f()
-	os.Chdir(originalPath)
+
+	if err := os.Chdir(originalPath); err != nil {
+		panic(err)
+	}
 }
 
 // RemoveAppSymlinkOrFail deletes a symlink at ~/.puma-dev/{name} or fails the test.
