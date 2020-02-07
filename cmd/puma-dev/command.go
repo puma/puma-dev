@@ -82,7 +82,7 @@ func link() error {
 		return errors.Context(err, "creating symlink")
 	}
 
-	fmt.Printf("+ App '%s' created, linked to '%s'\n", *name, dest)
+	fmt.Printf("+ App '%s' created, linked to '%s'\n", *name, dir)
 
 	return nil
 }

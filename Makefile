@@ -4,6 +4,10 @@ all:
 install:
 	go install ./cmd/puma-dev
 
+lint:
+	find . -name '*.go' -not -wholename './vendor/*' -exec golint '{}' \;
+	golangci-lint run
+
 release:
 	rm -rf ./pkg
 	mkdir -p ./pkg
