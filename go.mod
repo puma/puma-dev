@@ -8,7 +8,8 @@ require (
 	github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880
 	github.com/kardianos/osext v0.0.0-20151222153229-29ae4ffbc9a6
 	github.com/miekg/dns v0.0.0-20160726032027-db96a2b759cd
-	github.com/stretchr/testify v1.1.4-0.20160221104443-1f4a1643a57e
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/vektra/errors v0.0.0-20140903201135-c64d83aba85a
 	github.com/vektra/neko v0.0.0-20141017182438-843f5ecf6932
 	golang.org/x/exp v0.0.0-20160805011819-6e7e2f19a280
