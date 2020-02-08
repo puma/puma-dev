@@ -17,9 +17,33 @@ func TestMain(m *testing.M) {
 }
 
 func TestHttp_removeTLD_test(t *testing.T) {
-	str := testHttp.removeTLD("psychic-octo-giggle.test")
+	str := testHttp.removeTLD("psychic-octo-guide.test")
 
-	assert.Equal(t, "psychic-octo-giggle", str)
+	assert.Equal(t, "psychic-octo-guide", str)
+}
+
+func TestHttp_removeTLD_noTld(t *testing.T) {
+	str := testHttp.removeTLD("shiny-train")
+
+	assert.Equal(t, "shiny-train", str)
+}
+
+func TestHttp_removeTLD_mutlipartDomain(t *testing.T) {
+	str := testHttp.removeTLD("expert-eureka.loc.al")
+
+	assert.Equal(t, "expert-eureka.loc", str)
+}
+
+func TestHttp_removeTLD_dev(t *testing.T) {
+	str := testHttp.removeTLD("bookish-giggle.dev:8080")
+
+	assert.Equal(t, "bookish-giggle", str)
+}
+
+func TestHttp_removeTLD_xipIoMalformed(t *testing.T) {
+	str := testHttp.removeTLD("legendary-meme.0.0.xip.io")
+
+	assert.Equal(t, "", str)
 }
 
 func TestHttp_removeTLD_xipIoDots(t *testing.T) {
