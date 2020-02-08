@@ -1,20 +1,12 @@
 package dev
 
 import (
-	"os"
 	"testing"
-
-	. "github.com/puma/puma-dev/dev/devtest"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var testHttp HTTPServer
-
-func TestMain(m *testing.M) {
-	EnsurePumaDevDirectory()
-	os.Exit(m.Run())
-}
 
 func TestHttp_removeTLD_test(t *testing.T) {
 	str := testHttp.removeTLD("psychic-octo-guide.test")
