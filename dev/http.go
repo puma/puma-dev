@@ -104,41 +104,6 @@ func (h *HTTPServer) findApp(name string) (*App, error) {
 	return app, nil
 }
 
-func (h *HTTPServer) hostForApp(name string) (string, string, error) {
-	var (
-		app *App
-		err error
-	)
-
-	for name != "" {
-		app, err = h.Pool.App(name)
-		if err != nil {
-			if err == ErrUnknownApp {
-				name = pruneSub(name)
-				continue
-			}
-
-			return "", "", err
-		}
-
-		break
-	}
-
-	if app == nil {
-		app, err = h.Pool.App("default")
-		if err != nil {
-			return "", "", err
-		}
-	}
-
-	err = app.WaitTilReady()
-	if err != nil {
-		return "", "", err
-	}
-
-	return app.Scheme, app.Address(), nil
-}
-
 func (h *HTTPServer) removeTLD(host string) string {
 	colon := strings.LastIndexByte(host, ':')
 	if colon != -1 {
