@@ -21,13 +21,13 @@ func TestMain_allCheck_versionFlag(t *testing.T) {
 	err := cmd.Run()
 
 	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-		t.Fatalf("process ran with err %v, want exit status 0", err)
+		t.Fatalf("`puma-dev -V` had exit status %v, wanted exit status 0", err)
 	}
 }
 
 func TestMain_allCheck_badArg(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubFlagArgs([]string{"bad-argument-that-does-not-exist"})
+		StubFlagArgs([]string{"-badarg"})
 		allCheck()
 
 		return
@@ -38,6 +38,6 @@ func TestMain_allCheck_badArg(t *testing.T) {
 	err := cmd.Run()
 
 	if e, ok := err.(*exec.ExitError); ok && e.Success() {
-		t.Fatalf("process ran with err %v, want exit status 1", err)
+		t.Fatalf("`puma-dev -badarg` had exit status %v, wanted exit status 1", err)
 	}
 }
