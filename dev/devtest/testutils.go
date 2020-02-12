@@ -19,10 +19,13 @@ var (
 	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
 )
 
-// StubCommandLineArgs overrides command arguments to allow flag-based branches to execute. It does not
-// modify os.Args[0] so it can be used for subprocess tests. It also resets all defined flags to their
-// default values, as flag.Parse() will not reset non-existent boolean flags if they have been stubbed
-// in other tests.
+/*
+	StubCommandLineArgs overrides command arguments to allow flag-based branches
+	to execute. It does not modify os.Args[0] so it can be used for subprocess
+	tests. It also resets all defined flags to their default values, as
+	`flag.Parse()` will not reset non-existent boolean flags if they have been
+	stubbed in other tests.
+*/
 func StubCommandLineArgs(args []string) {
 	os.Args = append([]string{os.Args[0]}, args...)
 
@@ -52,7 +55,8 @@ func EnsurePumaDevDirectory() {
 	}
 }
 
-// WithStdoutCaptured executes the passed function and returns a string containing the stdout of the executed function.
+// WithStdoutCaptured executes the passed function and returns a string
+// containing the stdout of the executed function.
 func WithStdoutCaptured(f func()) string {
 	osStdout := os.Stdout
 	r, w, err := os.Pipe()
@@ -91,7 +95,8 @@ func RemoveDirectoryOrFail(t *testing.T, path string) {
 	}
 }
 
-// MakeDirectoryOrFail makes a directory or fails the test, returning the path of the directory that was created.
+// MakeDirectoryOrFail makes a directory or fails the test, returning the path
+// of the directory that was created.
 func MakeDirectoryOrFail(t *testing.T, path string) string {
 	if err := os.Mkdir(path, 0755); err != nil {
 		assert.Fail(t, err.Error())
