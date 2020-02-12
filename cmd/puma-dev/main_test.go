@@ -46,9 +46,10 @@ func TestMain_allCheck_versionFlag(t *testing.T) {
 	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
 	err := cmd.Run()
 
-	if exit, ok := err.(*exec.ExitError); ok && !exit.Success() {
-		t.Fatalf("`puma-dev -V` errored with exit %v)", exit)
-	}
+	exit, ok := err.(*exec.ExitError)
+
+	assert.False(t, ok)
+	assert.Nil(t, exit)
 }
 
 func TestMain_allCheck_badArg(t *testing.T) {
@@ -63,7 +64,8 @@ func TestMain_allCheck_badArg(t *testing.T) {
 	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
 	err := cmd.Run()
 
-	if exit, ok := err.(*exec.ExitError); !ok || exit.Success() {
-		t.Fatalf("`puma-dev -badarg` did not error (err: %v)", err)
-	}
+	exit, ok := err.(*exec.ExitError)
+
+	assert.True(t, ok)
+	assert.False(t, exit.Success())
 }
