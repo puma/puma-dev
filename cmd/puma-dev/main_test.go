@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"os/exec"
 	"testing"
@@ -10,18 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//
-// func FlagResetForTesting() {
-// 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-// 	flag.CommandLine.Usage = flag.Usage()
-// }
-
 func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 	StubCommandLineArgs([]string{"-V"})
-	if err := flag.Set("V", "true"); err != nil {
-		panic(err)
-	}
-
 	assert.True(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
@@ -35,10 +24,6 @@ func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 
 func TestMain_execWithExitStatus_noFlag(t *testing.T) {
 	StubCommandLineArgs(nil)
-	if err := flag.Set("V", "false"); err != nil {
-		panic(err)
-	}
-
 	assert.False(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
