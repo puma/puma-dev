@@ -19,19 +19,19 @@ var (
 	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
 )
 
-func resetAllFlagValuesToDefault() {
+// StubCommandLineArgs overrides command arguments to allow flag-based branches to execute. It does not
+// modify os.Args[0] so it can be used for subprocess tests. It also resets all defined flags to their
+// default values, as flag.Parse() will not reset non-existent boolean flags if they have been stubbed
+// in other tests.
+func StubCommandLineArgs(args []string) {
+	os.Args = append([]string{os.Args[0]}, args...)
+
 	flag.VisitAll(func(fl *flag.Flag) {
 		if err := flag.Set(fl.Name, fl.DefValue); err != nil {
 			panic(err)
 		}
 	})
-}
 
-// StubCommandLineArgs overrides command arguments to allow flag-based branches to execute.
-// Note that it does NOT modify os.Args[0] so it can be used for subprocess tests.
-func StubCommandLineArgs(args []string) {
-	os.Args = append([]string{os.Args[0]}, args...)
-	resetAllFlagValuesToDefault()
 	flag.Parse()
 }
 

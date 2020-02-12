@@ -19,7 +19,7 @@ func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 		assert.Equal(t, true, shouldExit)
 	})
 
-	assert.Regexp(t, "^Version: devel \\(go[0-9.]+\\)\\n$", execStdOut)
+	assert.Regexp(t, "^Version: devel \\(.+\\)\\n$", execStdOut)
 }
 
 func TestMain_execWithExitStatus_noFlag(t *testing.T) {
