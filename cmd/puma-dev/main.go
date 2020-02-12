@@ -8,19 +8,18 @@ import (
 )
 
 var fVersion = flag.Bool("V", false, "display version info")
-
 var Version = "devel"
 
 func allCheck() {
-	if status := execWithStatus(); status >= 0 {
-		os.Exit(0)
+	if status, shouldExit := execWithExitStatus(); shouldExit {
+		os.Exit(status)
 	}
 }
 
-func execWithStatus() int {
+func execWithExitStatus() (int, bool) {
 	if *fVersion {
 		fmt.Printf("Version: %s (%s)\n", Version, runtime.Version())
-		return 0
+		return 0, true
 	}
 
 	if flag.NArg() > 0 {
@@ -28,13 +27,13 @@ func execWithStatus() int {
 
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
-			return 1
+			return 1, true
 		}
 
-		return 0
+		return 0, true
 	}
 
-	return -1
+	return -1, false
 }
 
 func init() {
