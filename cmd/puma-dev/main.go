@@ -12,21 +12,29 @@ var fVersion = flag.Bool("V", false, "display version info")
 var Version = "devel"
 
 func allCheck() {
+	if status := execWithStatus(); status >= 0 {
+		os.Exit(0)
+	}
+}
+
+func execWithStatus() int {
 	if *fVersion {
 		fmt.Printf("Version: %s (%s)\n", Version, runtime.Version())
-		os.Exit(0)
+		return 0
 	}
 
 	if flag.NArg() > 0 {
 		err := command()
+
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
-			os.Exit(1)
+			return 1
 		}
 
-		os.Exit(0)
-		return
+		return 0
 	}
+
+	return -1
 }
 
 func init() {
