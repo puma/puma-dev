@@ -10,8 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//
+// func FlagResetForTesting() {
+// 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+// 	flag.CommandLine.Usage = flag.Usage()
+// }
+
 func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
-	flag.Set("V", "true")
+	StubCommandLineArgs([]string{"-V"})
+	if err := flag.Set("V", "true"); err != nil {
+		panic(err)
+	}
+
 	assert.True(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
@@ -24,7 +34,11 @@ func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 }
 
 func TestMain_execWithExitStatus_noFlag(t *testing.T) {
-	flag.Set("V", "false")
+	StubCommandLineArgs(nil)
+	if err := flag.Set("V", "false"); err != nil {
+		panic(err)
+	}
+
 	assert.False(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
@@ -37,7 +51,7 @@ func TestMain_execWithExitStatus_noFlag(t *testing.T) {
 
 func TestMain_allCheck_versionFlag(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubFlagArgs([]string{"-V"})
+		StubCommandLineArgs([]string{"-V"})
 		allCheck()
 
 		return
@@ -54,7 +68,7 @@ func TestMain_allCheck_versionFlag(t *testing.T) {
 
 func TestMain_allCheck_badArg(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubFlagArgs([]string{"-badarg"})
+		StubCommandLineArgs([]string{"-badarg"})
 		allCheck()
 
 		return
