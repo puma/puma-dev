@@ -19,11 +19,10 @@ var (
 	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
 )
 
-// StubFlagArgs overrides command arguments to pretend as if puma-dev was executed at the commandline.
-// ex: StubArgFlags([]string{"-n", "myapp", "path/to/app"}) ->
-//   $ puma-dev -n myapp path/to/app
+// StubFlagArgs overrides command arguments to allow flag-based branches to execute.
+// Note that it does NOT modify os.Args[0] so it can be used for subprocess tests.
 func StubFlagArgs(args []string) {
-	os.Args = append([]string{"puma-dev"}, args...)
+	os.Args = append([]string{os.Args[0]}, args...)
 	flag.Parse()
 }
 
