@@ -16,16 +16,11 @@ import (
 )
 
 var (
-<<<<<<< HEAD
-	appSymlinkHome = "~/.puma-dev"
-	_, b, _, _     = runtime.Caller(0)
-	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
-	stubbedArgs    = make(map[string]int)
-=======
-	DebugLoggingEnabled = os.Getenv("DEBUG_LOG") == "1"
 	appSymlinkHome      = "~/.puma-dev"
+	DebugLoggingEnabled = os.Getenv("DEBUG_LOG") == "1"
+	_, b, _, _          = runtime.Caller(0)
+	ProjectRoot         = filepath.Join(filepath.Dir(b), "..", "..")
 	StubbedArgs         = make(map[string]int)
->>>>>>> aed9608... ok, proceed with the reset-to-default-if-stubbed strategy.
 )
 
 func LogDebugf(msg string, vars ...interface{}) {
