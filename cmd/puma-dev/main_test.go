@@ -19,9 +19,9 @@ func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 	assert.True(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
-		status, shouldExit := execWithExitStatus()
-		assert.Equal(t, 0, status)
-		assert.Equal(t, true, shouldExit)
+		result := execWithExitStatus()
+		assert.Equal(t, 0, result.exitStatusCode)
+		assert.Equal(t, true, result.shouldExit)
 	})
 
 	assert.Regexp(t, "^Version: devel \\(.+\\)\\n$", execStdOut)
@@ -32,8 +32,8 @@ func TestMain_execWithExitStatus_noFlag(t *testing.T) {
 	assert.False(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
-		_, shouldExit := execWithExitStatus()
-		assert.Equal(t, false, shouldExit)
+		result := execWithExitStatus()
+		assert.Equal(t, false, result.shouldExit)
 	})
 
 	assert.Equal(t, "", execStdOut)
@@ -43,9 +43,9 @@ func TestMain_execWithExitStatus_commandArgs(t *testing.T) {
 	StubCommandLineArgs("nosoupforyou")
 
 	execStdOut := WithStdoutCaptured(func() {
-		status, shouldExit := execWithExitStatus()
-		assert.Equal(t, 1, status)
-		assert.Equal(t, true, shouldExit)
+		result := execWithExitStatus()
+		assert.Equal(t, 1, result.exitStatusCode)
+		assert.Equal(t, true, result.shouldExit)
 	})
 
 	assert.Equal(t, "Error: Unknown command: nosoupforyou\n\n", execStdOut)

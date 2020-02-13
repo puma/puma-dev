@@ -7,19 +7,30 @@ import (
 	"runtime"
 )
 
-var fVersion = flag.Bool("V", false, "display version info")
-var Version = "devel"
+var (
+	EarlyExitClean = CommandResult{0, true}
+	EarlyExitError = CommandResult{1, true}
+	Continue       = CommandResult{-1, false}
+
+	fVersion = flag.Bool("V", false, "display version info")
+	Version  = "devel"
+)
+
+type CommandResult struct {
+	exitStatusCode int
+	shouldExit     bool
+}
 
 func allCheck() {
-	if status, shouldExit := execWithExitStatus(); shouldExit {
-		os.Exit(status)
+	if result := execWithExitStatus(); result.shouldExit {
+		os.Exit(result.exitStatusCode)
 	}
 }
 
-func execWithExitStatus() (int, bool) {
+func execWithExitStatus() CommandResult {
 	if *fVersion {
 		fmt.Printf("Version: %s (%s)\n", Version, runtime.Version())
-		return 0, true
+		return EarlyExitClean
 	}
 
 	if flag.NArg() > 0 {
@@ -27,13 +38,13 @@ func execWithExitStatus() (int, bool) {
 
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
-			return 1, true
+			return EarlyExitError
 		}
 
-		return 0, true
+		return EarlyExitClean
 	}
 
-	return -1, false
+	return Continue
 }
 
 func init() {
