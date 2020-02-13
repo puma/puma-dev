@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"flag"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/puma/puma-dev/homedir"
@@ -17,6 +19,7 @@ var (
 	appSymlinkHome = "~/.puma-dev"
 	_, b, _, _     = runtime.Caller(0)
 	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
+	stubbedArgs    = make(map[string]int)
 )
 
 /*
@@ -27,14 +30,21 @@ var (
 	stubbed in other tests.
 */
 func StubCommandLineArgs(args []string) {
-	os.Args = append([]string{os.Args[0]}, args...)
+	for _, arg := range args {
+		stubbedArgs[arg] += 1
+	}
 
-	flag.VisitAll(func(fl *flag.Flag) {
-		if err := flag.Set(fl.Name, fl.DefValue); err != nil {
-			panic(err)
+	for arg := range stubbedArgs {
+		stubbedFlagName := strings.Replace(arg, "-", "", -1)
+
+		if fl := flag.Lookup(stubbedFlagName); fl != nil {
+			if err := flag.Set(fl.Name, fl.DefValue); err == nil {
+				log.Printf("reset %+v", fl)
+			}
 		}
-	})
+	}
 
+	os.Args = append([]string{os.Args[0]}, args...)
 	flag.Parse()
 }
 

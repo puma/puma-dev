@@ -28,12 +28,3 @@ coverage:
 	go tool cover -html=coverage.out
 
 .PHONY: all release
-
-PACKAGES = $(shell find ./ -type d -not -path '*/\.*')
-
-test-cover-html:
-	echo "mode: count" > coverage-all.out
-	$(foreach pkg,$(PACKAGES),\
-		go test -coverprofile=coverage.out $(pkg);\
-		tail -n +2 coverage.out >> coverage-all.out;)
-	go tool cover -html=coverage-all.out

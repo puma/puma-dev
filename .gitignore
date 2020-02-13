@@ -5,3 +5,4 @@ vendor/pkg/
 /puma-dev-*zip
 /puma-dev-*tar.gz
 /tmp
+coverage.out
