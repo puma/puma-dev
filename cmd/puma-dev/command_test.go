@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	. "github.com/puma/puma-dev/dev/devtest"
@@ -10,11 +9,6 @@ import (
 	"github.com/puma/puma-dev/homedir"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	EnsurePumaDevDirectory()
-	os.Exit(m.Run())
-}
 
 func TestCommand_noCommandArg(t *testing.T) {
 	StubCommandLineArgs(nil)

@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain(m *testing.M) {
+	EnsurePumaDevDirectory()
+	os.Exit(m.Run())
+}
+
 func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 	StubCommandLineArgs([]string{"-V"})
 	assert.True(t, *fVersion)
