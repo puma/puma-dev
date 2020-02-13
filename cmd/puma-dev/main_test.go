@@ -39,6 +39,18 @@ func TestMain_execWithExitStatus_noFlag(t *testing.T) {
 	assert.Equal(t, "", execStdOut)
 }
 
+func TestMain_execWithExitStatus_commandArgs(t *testing.T) {
+	StubCommandLineArgs("nosoupforyou")
+
+	execStdOut := WithStdoutCaptured(func() {
+		status, shouldExit := execWithExitStatus()
+		assert.Equal(t, 1, status)
+		assert.Equal(t, true, shouldExit)
+	})
+
+	assert.Equal(t, "Error: Unknown command: nosoupforyou\n\n", execStdOut)
+}
+
 func TestMain_allCheck_versionFlag(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
 		StubCommandLineArgs("-V")
