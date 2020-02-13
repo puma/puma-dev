@@ -45,7 +45,8 @@ func status() error {
 	res, err := client.Do(req)
 
 	if err != nil {
-		return err
+		fmt.Println("puma-dev is not running")
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
