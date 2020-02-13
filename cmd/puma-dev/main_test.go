@@ -63,10 +63,7 @@ func TestMain_allCheck_versionFlag(t *testing.T) {
 	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
 	err := cmd.Run()
 
-	exit, ok := err.(*exec.ExitError)
-
-	assert.False(t, ok)
-	assert.Nil(t, exit)
+	assert.Nil(t, err)
 }
 
 func TestMain_allCheck_badArg(t *testing.T) {
