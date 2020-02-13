@@ -41,7 +41,7 @@ func LogDebugf(msg string, vars ...interface{}) {
 	`flag.Parse()` will not reset non-existent boolean flags if they have been
 	stubbed in other tests.
 */
-func StubCommandLineArgs(args []string) {
+func StubCommandLineArgs(args ...string) {
 	for _, arg := range args {
 		StubbedArgs[arg] += 1
 	}

@@ -11,19 +11,19 @@ import (
 )
 
 func TestCommand_noCommandArg(t *testing.T) {
-	StubCommandLineArgs(nil)
+	StubCommandLineArgs()
 	err := command()
 	assert.Equal(t, "Unknown command: \n", err.Error())
 }
 
 func TestCommand_badCommandArg(t *testing.T) {
-	StubCommandLineArgs([]string{"doesnotexist"})
+	StubCommandLineArgs("doesnotexist")
 	err := command()
 	assert.Equal(t, "Unknown command: doesnotexist\n", err.Error())
 }
 
 func TestCommand_link_noArgs(t *testing.T) {
-	StubCommandLineArgs([]string{"link"})
+	StubCommandLineArgs("link")
 
 	appDir, _ := homedir.Expand("~/my-test-puma-dev-application")
 
@@ -44,7 +44,7 @@ func TestCommand_link_noArgs(t *testing.T) {
 func TestCommand_link_withNameOverride(t *testing.T) {
 	tmpCwd := "/tmp/puma-dev-example-command-link-noargs"
 
-	StubCommandLineArgs([]string{"link", "-n", "anothername", tmpCwd})
+	StubCommandLineArgs("link", "-n", "anothername", tmpCwd)
 
 	WithWorkingDirectory(tmpCwd, func() {
 		actual := WithStdoutCaptured(func() {
@@ -60,7 +60,7 @@ func TestCommand_link_withNameOverride(t *testing.T) {
 }
 
 func TestCommand_link_invalidDirectory(t *testing.T) {
-	StubCommandLineArgs([]string{"link", "/this/path/does/not/exist"})
+	StubCommandLineArgs("link", "/this/path/does/not/exist")
 
 	err := command()
 
@@ -76,7 +76,7 @@ func TestCommand_link_reassignExistingApp(t *testing.T) {
 	defer RemoveDirectoryOrFail(t, appDir2)
 	defer RemoveAppSymlinkOrFail(t, appAlias)
 
-	StubCommandLineArgs([]string{"link", "-n", appAlias, appDir1})
+	StubCommandLineArgs("link", "-n", appAlias, appDir1)
 	actual1 := WithStdoutCaptured(func() {
 		if err := command(); err != nil {
 			assert.Fail(t, err.Error())
@@ -85,7 +85,7 @@ func TestCommand_link_reassignExistingApp(t *testing.T) {
 
 	assert.Equal(t, fmt.Sprintf("+ App '%s' created, linked to '%s'\n", appAlias, appDir1), actual1)
 
-	StubCommandLineArgs([]string{"link", "-n", appAlias, appDir2})
+	StubCommandLineArgs("link", "-n", appAlias, appDir2)
 	actual2 := WithStdoutCaptured(func() {
 		if err := command(); err != nil {
 			assert.Fail(t, err.Error())

@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
-	StubCommandLineArgs([]string{"-V"})
+	StubCommandLineArgs("-V")
 	assert.True(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
@@ -28,7 +28,7 @@ func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
 }
 
 func TestMain_execWithExitStatus_noFlag(t *testing.T) {
-	StubCommandLineArgs(nil)
+	StubCommandLineArgs()
 	assert.False(t, *fVersion)
 
 	execStdOut := WithStdoutCaptured(func() {
@@ -41,7 +41,7 @@ func TestMain_execWithExitStatus_noFlag(t *testing.T) {
 
 func TestMain_allCheck_versionFlag(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubCommandLineArgs([]string{"-V"})
+		StubCommandLineArgs("-V")
 		allCheck()
 
 		return
@@ -59,7 +59,7 @@ func TestMain_allCheck_versionFlag(t *testing.T) {
 
 func TestMain_allCheck_badArg(t *testing.T) {
 	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubCommandLineArgs([]string{"-badarg"})
+		StubCommandLineArgs("-badarg")
 		allCheck()
 
 		return
