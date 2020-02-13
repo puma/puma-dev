@@ -18,9 +18,9 @@ import (
 var (
 	appSymlinkHome      = "~/.puma-dev"
 	DebugLoggingEnabled = os.Getenv("DEBUG_LOG") == "1"
+	StubbedArgs         = make(map[string]int)
 	_, b, _, _          = runtime.Caller(0)
 	ProjectRoot         = filepath.Join(filepath.Dir(b), "..", "..")
-	StubbedArgs         = make(map[string]int)
 )
 
 func LogDebugf(msg string, vars ...interface{}) {
