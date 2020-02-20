@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/puma/puma-dev/homedir"
@@ -14,6 +15,8 @@ import (
 
 var (
 	appSymlinkHome = "~/.puma-dev"
+	_, b, _, _     = runtime.Caller(0)
+	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
 )
 
 // StubFlagArgs overrides command arguments to pretend as if puma-dev was executed at the commandline.
@@ -129,4 +132,13 @@ func RemoveAppSymlinkOrFail(t *testing.T, name string) {
 	if err := os.Remove(path); err != nil {
 		panic(err)
 	}
+}
+
+// FileExists returns true if a regular file exists at the given path.
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
