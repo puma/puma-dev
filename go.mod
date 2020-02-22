@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/bmizerany/pat v0.0.0-20160217103242-c068ca2f0aac
-	github.com/fsnotify/fsevents v0.1.0
+	github.com/fsnotify/fsevents v0.1.1
 	github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880
 	github.com/kardianos/osext v0.0.0-20151222153229-29ae4ffbc9a6
 	github.com/miekg/dns v0.0.0-20160726032027-db96a2b759cd
