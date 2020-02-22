@@ -34,6 +34,9 @@ func TestWatch_ExpectTouchSignalAfterModify(t *testing.T) {
 	touchFile(t, tmpRestartTxt)
 
 	watchTriggered := watchTmpFileWithTimeout(t, func() {
+		// HFS only has seconds resolution. We need to ensure that when we "touch"
+		// the file, we advance the modified time by at least one second.
+		time.Sleep(time.Second)
 		touchFile(t, tmpRestartTxt)
 	})
 
@@ -78,7 +81,7 @@ func watchTmpFileWithTimeout(t *testing.T, f func()) bool {
 
 	timeoutDone := make(chan struct{})
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		timeoutDone <- Notice{}
 	}()
 
