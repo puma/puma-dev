@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"flag"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/puma/puma-dev/homedir"
@@ -14,16 +16,45 @@ import (
 )
 
 var (
-	appSymlinkHome = "~/.puma-dev"
-	_, b, _, _     = runtime.Caller(0)
-	ProjectRoot    = filepath.Join(filepath.Dir(b), "..", "..")
+	appSymlinkHome      = "~/.puma-dev"
+	DebugLoggingEnabled = os.Getenv("DEBUG_LOG") == "1"
+	StubbedArgs         = make(map[string]int)
+	_, b, _, _          = runtime.Caller(0)
+	ProjectRoot         = filepath.Join(filepath.Dir(b), "..", "..")
 )
 
-// StubFlagArgs overrides command arguments to pretend as if puma-dev was executed at the commandline.
-// ex: StubArgFlags([]string{"-n", "myapp", "path/to/app"}) ->
-//   $ puma-dev -n myapp path/to/app
-func StubFlagArgs(args []string) {
-	os.Args = append([]string{"puma-dev"}, args...)
+func LogDebugf(msg string, vars ...interface{}) {
+	if DebugLoggingEnabled {
+		log.Printf(strings.Join([]string{"[DEBUG]", msg}, " "), vars...)
+	}
+}
+
+/*
+	StubCommandLineArgs overrides command arguments to allow flag-based branches
+	to execute. It does not modify os.Args[0] so it can be used for subprocess
+	tests. It also resets all defined flags to their default values, as
+	`flag.Parse()` will not reset non-existent boolean flags if they have been
+	stubbed in other tests.
+*/
+func StubCommandLineArgs(args ...string) {
+	for _, arg := range args {
+		StubbedArgs[arg] += 1
+	}
+
+	for arg := range StubbedArgs {
+		stubbedFlagName := strings.Replace(arg, "-", "", -1)
+
+		if fl := flag.Lookup(stubbedFlagName); fl != nil {
+
+			oldValue := fl.Value.String()
+
+			if err := flag.Set(fl.Name, fl.DefValue); err == nil {
+				LogDebugf("reset flag %s to %s (was %s)", fl.Name, fl.Value.String(), oldValue)
+			}
+		}
+	}
+
+	os.Args = append([]string{os.Args[0]}, args...)
 	flag.Parse()
 }
 
@@ -44,7 +75,8 @@ func EnsurePumaDevDirectory() {
 	}
 }
 
-// WithStdoutCaptured executes the passed function and returns a string containing the stdout of the executed function.
+// WithStdoutCaptured executes the passed function and returns a string
+// containing the stdout of the executed function.
 func WithStdoutCaptured(f func()) string {
 	osStdout := os.Stdout
 	r, w, err := os.Pipe()
@@ -83,7 +115,8 @@ func RemoveDirectoryOrFail(t *testing.T, path string) {
 	}
 }
 
-// MakeDirectoryOrFail makes a directory or fails the test, returning the path of the directory that was created.
+// MakeDirectoryOrFail makes a directory or fails the test, returning the path
+// of the directory that was created.
 func MakeDirectoryOrFail(t *testing.T, path string) string {
 	if err := os.Mkdir(path, 0755); err != nil {
 		assert.Fail(t, err.Error())
