@@ -4,3 +4,4 @@ vendor/pkg/
 /puma-dev
 /puma-dev-*zip
 /puma-dev-*tar.gz
+/tmp
