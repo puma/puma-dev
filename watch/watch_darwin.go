@@ -1,7 +1,6 @@
 package watch
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,12 +9,10 @@ import (
 )
 
 func Watch(watchedPath string, done <-chan struct{}, change func()) error {
-	fmt.Printf("watchedPath: %s\n", watchedPath)
 	watchedAbsPath, err := filepath.EvalSymlinks(watchedPath)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("watchedAbsPath: %s\n", watchedAbsPath)
 
 	lastStat, err := os.Stat(watchedAbsPath)
 	if err != nil {
