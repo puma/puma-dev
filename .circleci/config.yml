@@ -1,0 +1,34 @@
+version: 2.1
+jobs:
+  build:
+    macos:
+      xcode: 11.3.0
+    environment:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - run: sw_vers
+
+      # - run:
+      #     name: install goenv
+      #     command: |
+      #       git clone https://github.com/syndbg/goenv.git ~/.goenv
+      #       echo 'export GOENV_ROOT="$HOME/.goenv"' >> $BASH_ENV
+      #       echo 'export PATH="$GOENV_ROOT/bin:$PATH"' >> $BASH_ENV
+      #       echo 'eval "$(goenv init -)"' >> $BASH_ENV
+      #
+      # - run:
+      #     name: goenv install go-1.12
+      #     command: |
+      #       goenv install 1.12.17
+      #       goenv global 1.12.17
+
+      - run:
+          name: install go-1.12
+          command: |
+            brew install go@1.12
+            echo 'export PATH="/usr/local/opt/go@1.12/bin:$PATH"' >> $BASH_ENV
+
+      - checkout
+      - run: go version
+      - run: go mod download
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic -timeout=15s
