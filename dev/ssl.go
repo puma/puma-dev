@@ -10,36 +10,21 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/puma/puma-dev/homedir"
 	"github.com/vektra/errors"
 )
 
 var CACert *tls.Certificate
 
-func SetupOurCert() error {
-	dir := homedir.MustExpand(supportDir)
-
-	err := os.MkdirAll(dir, 0700)
-	if err != nil {
-		return err
-	}
-
-	keyPath := filepath.Join(dir, "key.pem")
-	certPath := filepath.Join(dir, "cert.pem")
-
-	tlsCert, err := tls.LoadX509KeyPair(certPath, keyPath)
-	if err == nil {
-		CACert = &tlsCert
-		return nil
-	}
-
+func GeneratePumaDevCertificateAuthority(certPath string, keyPath string) error {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return errors.Context(err, "generating new RSA key")
@@ -65,7 +50,7 @@ func SetupOurCert() error {
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		IsCA: true,
+		IsCA:                  true,
 	}
 
 	derBytes, err := x509.CreateCertificate(
@@ -98,7 +83,36 @@ func SetupOurCert() error {
 
 	keyOut.Close()
 
-	return TrustCert(certPath)
+	return nil
+}
+
+func SetupOurCert() error {
+	dir := homedir.MustExpand(SupportDir)
+
+	err := os.MkdirAll(dir, 0700)
+	if err != nil {
+		return err
+	}
+
+	keyPath := filepath.Join(dir, "key.pem")
+	certPath := filepath.Join(dir, "cert.pem")
+
+	tlsCert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err == nil {
+		log.Println("Existing valid puma-dev CA keypair found. Assuming previously trusted.")
+		CACert = &tlsCert
+		return nil
+	}
+
+	if certGenErr := GeneratePumaDevCertificateAuthority(certPath, keyPath); certGenErr != nil {
+		return certGenErr
+	}
+
+	if trustCertErr := TrustCert(certPath); trustCertErr != nil {
+		return trustCertErr
+	}
+
+	return nil
 }
 
 type certCache struct {
