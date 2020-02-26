@@ -3,6 +3,7 @@ module github.com/puma/puma-dev
 go 1.13
 
 require (
+	github.com/avast/retry-go v2.5.0+incompatible
 	github.com/bmizerany/pat v0.0.0-20160217103242-c068ca2f0aac
 	github.com/fsnotify/fsevents v0.1.1
 	github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880

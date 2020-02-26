@@ -3,13 +3,14 @@ package dev
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 
 	"github.com/puma/puma-dev/homedir"
 )
 
-const supportDir = "~/Library/Application Support/io.puma.dev"
+const SupportDir = "~/Library/Application Support/io.puma.dev"
 
 func LoginKeyChain() (string, error) {
 
@@ -37,12 +38,22 @@ func TrustCert(cert string) error {
 		return keychainError
 	}
 
-	err := exec.Command("sh", "-c",
-		fmt.Sprintf(`security add-trusted-cert -d -r trustRoot -k '%s' '%s'`,
-			login, cert)).Run()
+	addTrustedCertCommand := exec.Command("sh", "-c",
+		fmt.Sprintf(`security add-trusted-cert -d -r trustRoot -k '%s' '%s'`, login, cert))
 
-	if err != nil {
+	stderr, readPipeErr := addTrustedCertCommand.StderrPipe()
+	if readPipeErr != nil {
+		return readPipeErr
+	}
+
+	if err := addTrustedCertCommand.Start(); err != nil {
 		return err
+	}
+
+	stderrLines, _ := ioutil.ReadAll(stderr)
+
+	if err := addTrustedCertCommand.Wait(); err != nil {
+		return fmt.Errorf("add-trusted-cert had %s. %s", err.Error(), stderrLines)
 	}
 
 	fmt.Printf("* Certificates setup, ready for https operations!\n")
