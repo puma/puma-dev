@@ -26,6 +26,7 @@ func command() error {
 	}
 }
 
+// App is a running application.
 type App struct {
 	Status  string `json:"status"`
 	Scheme  string `json:"scheme"`
@@ -33,8 +34,15 @@ type App struct {
 }
 
 func status() error {
+	var port string
+
+	if *fHTTPPort != 9280 {
+		port = fmt.Sprintf(":%d", *fHTTPPort)
+	}
+
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://localhost/status", nil)
+	url := fmt.Sprintf("http://localhost%s/status", port)
+	req, err := http.NewRequest("GET", url, nil)
 	req.Host = "puma-dev"
 	w := tabwriter.NewWriter(os.Stdout, 20, 4, 1, ' ', 0)
 
@@ -45,7 +53,7 @@ func status() error {
 	res, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("puma-dev is not running")
+		fmt.Printf("Unable to lookup puma-dev status. Is puma-dev listening on port %d?\n", *fHTTPPort)
 		return nil
 	}
 
