@@ -26,6 +26,7 @@ func TestCommand_link_noArgs(t *testing.T) {
 	StubCommandLineArgs("link")
 
 	appDir, _ := homedir.Expand("~/my-test-puma-dev-application")
+	defer MakeDirectoryOrFail(t, appDir)()
 
 	WithWorkingDirectory(appDir, func() {
 		actual := WithStdoutCaptured(func() {
@@ -43,6 +44,7 @@ func TestCommand_link_noArgs(t *testing.T) {
 
 func TestCommand_link_withNameOverride(t *testing.T) {
 	tmpCwd := "/tmp/puma-dev-example-command-link-noargs"
+	defer MakeDirectoryOrFail(t, tmpCwd)()
 
 	StubCommandLineArgs("link", "-n", "anothername", tmpCwd)
 
@@ -69,12 +71,11 @@ func TestCommand_link_invalidDirectory(t *testing.T) {
 
 func TestCommand_link_reassignExistingApp(t *testing.T) {
 	appAlias := "apptastic"
-	appDir1 := MakeDirectoryOrFail(t, "/tmp/puma-dev-test-command-link-reassign-existing-app-one")
-	appDir2 := MakeDirectoryOrFail(t, "/tmp/puma-dev-test-command-link-reassign-existing-app-two")
+	appDir1 := "/tmp/puma-dev-test-command-link-reassign-existing-app-one"
+	appDir2 := "/tmp/puma-dev-test-command-link-reassign-existing-app-two"
 
-	defer RemoveDirectoryOrFail(t, appDir1)
-	defer RemoveDirectoryOrFail(t, appDir2)
-	defer RemoveAppSymlinkOrFail(t, appAlias)
+	defer MakeDirectoryOrFail(t, appDir1)()
+	defer MakeDirectoryOrFail(t, appDir2)()
 
 	StubCommandLineArgs("link", "-n", appAlias, appDir1)
 	actual1 := WithStdoutCaptured(func() {
@@ -93,4 +94,6 @@ func TestCommand_link_reassignExistingApp(t *testing.T) {
 	})
 
 	assert.Equal(t, fmt.Sprintf("! App '%s' already exists, pointed at '%s'\n", appAlias, appDir1), actual2)
+
+	RemoveAppSymlinkOrFail(t, appAlias)
 }
