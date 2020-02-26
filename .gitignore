@@ -1,8 +1,9 @@
-bin/
-pkg/
-vendor/pkg/
+/bin/
+/pkg/
+/vendor/pkg/
 /puma-dev
-/puma-dev-*zip
-/puma-dev-*tar.gz
 /tmp
-coverage.out
+/coverage*.out
+
+.ruby-version
+
