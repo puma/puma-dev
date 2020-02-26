@@ -21,10 +21,12 @@ release:
 	zip pkg/puma-dev-$$RELEASE-darwin-amd64.zip puma-dev
 
 test:
-	go test -v ./...
+	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-coverage:
-	go test -coverprofile=coverage.out -v ./...
+coverage: test
 	go tool cover -html=coverage.out
+
+test-osx-interactive:
+	go test -coverprofile=coverage_osx.out -v -test.run=TestSetupOurCert_InteractiveCertificateInstall ./dev
 
 .PHONY: all release
