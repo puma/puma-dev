@@ -2,24 +2,30 @@ package watch
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/fsnotify/fsevents"
 )
 
-func Watch(restart string, done <-chan struct{}, change func()) error {
-	lastStat, err := os.Stat(restart)
+func Watch(watchedPath string, done <-chan struct{}, change func()) error {
+	watchedAbsPath, err := filepath.EvalSymlinks(watchedPath)
 	if err != nil {
 		return err
 	}
 
-	dev, err := fsevents.DeviceForPath(restart)
+	lastStat, err := os.Stat(watchedAbsPath)
+	if err != nil {
+		return err
+	}
+
+	dev, err := fsevents.DeviceForPath(watchedAbsPath)
 	if err != nil {
 		return err
 	}
 
 	es := &fsevents.EventStream{
-		Paths:   []string{restart},
+		Paths:   []string{watchedAbsPath},
 		Latency: 500 * time.Millisecond,
 		Device:  dev,
 		Flags:   fsevents.FileEvents | fsevents.IgnoreSelf,
@@ -32,7 +38,7 @@ func Watch(restart string, done <-chan struct{}, change func()) error {
 	for {
 		select {
 		case <-es.Events:
-			cur, err := os.Stat(restart)
+			cur, err := os.Stat(watchedAbsPath)
 			if err != nil {
 				return err
 			}

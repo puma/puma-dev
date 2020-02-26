@@ -24,7 +24,7 @@ func TestWatch_ExpectTimeout(t *testing.T) {
 	defer createTmpDir(t)()
 	touchFile(t, tmpRestartTxt)
 
-	watchTriggered := watchTmpFileWithTimeout(t, func() {})
+	watchTriggered := watchTmpFileWithTimeout(t, tmpRestartTxt, func() {})
 
 	assert.False(t, watchTriggered)
 }
@@ -33,7 +33,29 @@ func TestWatch_ExpectTouchSignalAfterModify(t *testing.T) {
 	defer createTmpDir(t)()
 	touchFile(t, tmpRestartTxt)
 
-	watchTriggered := watchTmpFileWithTimeout(t, func() {
+	watchTriggered := watchTmpFileWithTimeout(t, tmpRestartTxt, func() {
+		// HFS only has seconds resolution. We need to ensure that when we "touch"
+		// the file, we advance the modified time by at least one second.
+		time.Sleep(time.Second)
+		touchFile(t, tmpRestartTxt)
+	})
+
+	assert.True(t, watchTriggered)
+}
+
+func TestWatch_SymlinkPath(t *testing.T) {
+	defer createTmpDir(t)()
+	touchFile(t, tmpRestartTxt)
+
+	tmpDirAlias := filepath.Join(devtest.ProjectRoot, "symlink-to-tmp")
+	tmpRestartTxtAlias := filepath.Join(devtest.ProjectRoot, "symlink-to-tmp", "restart.txt")
+
+	if err := os.Symlink(tmpDir, tmpDirAlias); err != nil {
+		assert.Fail(t, err.Error())
+	}
+	defer os.Remove(tmpDirAlias)
+
+	watchTriggered := watchTmpFileWithTimeout(t, tmpRestartTxtAlias, func() {
 		// HFS only has seconds resolution. We need to ensure that when we "touch"
 		// the file, we advance the modified time by at least one second.
 		time.Sleep(time.Second)
@@ -57,17 +79,17 @@ func touchFile(t *testing.T, fullPath string) {
 	}
 }
 
-func watchTmpFileWithTimeout(t *testing.T, f func()) bool {
+func watchTmpFileWithTimeout(t *testing.T, watchPath string, f func()) bool {
 	watchDone := make(chan struct{})
 	watchTriggered := false
 
-	if !devtest.FileExists(tmpRestartTxt) {
-		assert.Fail(t, fmt.Sprintf("%s does not exist", tmpRestartTxt))
+	if !devtest.FileExists(watchPath) {
+		assert.Fail(t, fmt.Sprintf("%s does not exist", watchPath))
 		return false
 	}
 
 	go func() {
-		err := Watch(tmpRestartTxt, watchDone, func() {
+		err := Watch(watchPath, watchDone, func() {
 			watchTriggered = true
 			watchDone <- Notice{}
 		})
