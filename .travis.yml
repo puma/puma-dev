@@ -13,5 +13,15 @@ os:
 install:
   - go get -t ./...
 
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      sudo mkdir -p /etc/resolver;
+      sudo chmod 0775 /etc/resolver;
+      sudo chown :staff /etc/resolver;
+    fi
+  - rvm install 2.7.0
+  - rvm --default use 2.7.0
+  - gem install puma
+
 script:
   - make test
