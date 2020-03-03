@@ -36,6 +36,11 @@ var (
 	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
 )
 
+const (
+	LaunchAgentDirPath = "~/Library/LaunchAgents"
+	LogFilePath        = "~/Library/Logs/puma-dev.log"
+)
+
 func main() {
 	flag.Parse()
 
@@ -54,7 +59,7 @@ func main() {
 	}
 
 	if *fUninstall {
-		dev.Uninstall(domains)
+		dev.Uninstall(LaunchAgentDirPath, domains)
 		return
 	}
 
@@ -62,9 +67,9 @@ func main() {
 		err := dev.InstallIntoSystem(&dev.InstallIntoSystemArgs{
 			ApplinkDirPath:     *fDir,
 			Domains:            *fDomains,
-			LaunchAgentDirPath: "~/Library/LaunchAgents",
+			LaunchAgentDirPath: LaunchAgentDirPath,
 			ListenPort:         *fInstallPort,
-			LogfilePath:        "~/Library/Logs/puma-dev.log",
+			LogfilePath:        LogFilePath,
 			Timeout:            (*fTimeout).String(),
 			TlsPort:            *fInstallTLS,
 		})

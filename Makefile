@@ -28,18 +28,24 @@ test:
 coverage: test
 	go tool cover -html=coverage.out -o coverage.html
 
-test-macos-interactive-certificate-install:
-	go test -coverprofile=coverage_osx.out -v -test.run=TestSetupOurCert_InteractiveCertificateInstall ./dev
+test-macos-interactive:
+	@echo "This will break your existing puma-dev setup. You'll need to run setup/install again. Cool? Cool."
+	@echo "Also, prepare to provide your system password several times."
+	@read -p "Press [return] to continue..."
+	go test ./... -v -test.run=DarwinInteractive -count=1
 
-test-macos-interactive-dev-setup-install: clean build
+test-macos-manual-setup-install: clean build
 	sudo launchctl unload "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
 	rm -rf "$$HOME/Library/ApplicationSupport/io.puma.dev"
-	rm "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
-	rm "$$HOME/Library/Logs/puma-dev.log"
+	rm -f "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
+	rm -f "$$HOME/Library/Logs/puma-dev.log"
+
 	sudo ./puma-dev -d 'test:localhost:loc.al:puma' -setup
 	./puma-dev -d 'test:localhost:loc.al:puma' -install
+
 	test -f "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
-	sleep 2
+	launchctl list io.puma.dev > /dev/null
 	test -f "$$HOME/Library/Logs/puma-dev.log"
+	test 'Hi Puma!' == "$$(curl -s https://rack-hi-puma.puma)" && echo "PASS"
 
 .PHONY: all release
