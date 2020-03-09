@@ -72,7 +72,7 @@ func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
 	}
 }
 
-func getUrlWithHost(t *testing.T, url string, host string) string {
+func getURLWithHost(t *testing.T, url string, host string) string {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Host = host
 
@@ -92,7 +92,7 @@ func getUrlWithHost(t *testing.T, url string, host string) string {
 func pollForEvent(t *testing.T, app string, event string, reason string) error {
 	return retry.Do(
 		func() error {
-			body := getUrlWithHost(t, fmt.Sprintf("http://localhost:%d/events", *fHTTPPort), "puma-dev")
+			body := getURLWithHost(t, fmt.Sprintf("http://localhost:%d/events", *fHTTPPort), "puma-dev")
 			eachEvent := strings.Split(body, "\n")
 
 			for _, line := range eachEvent {
@@ -123,9 +123,14 @@ func pollForEvent(t *testing.T, app string, event string, reason string) error {
 func TestMainPumaDev(t *testing.T) {
 	defer launchPumaDevBackgroundServerWithDefaults(t)()
 
-	for k, v := range map[string]string{"rack-hi-puma": "hipuma", "static-hi-puma": "static-site"} {
-		appPath := filepath.Join(ProjectRoot, "etc", k)
-		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), v)
+	testAppsToLink := map[string]string{
+		"rack-hi-puma":   "hipuma",
+		"static-hi-puma": "static-site",
+	}
+
+	for etcAppDir, appLinkName := range testAppsToLink {
+		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
+		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), appLinkName)
 
 		if err := os.Symlink(appPath, linkPath); err != nil {
 			assert.FailNow(t, err.Error())
@@ -133,25 +138,25 @@ func TestMainPumaDev(t *testing.T) {
 	}
 
 	t.Run("status", func(t *testing.T) {
-		statusUrl := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
+		reqURL := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
 		statusHost := "puma-dev"
 
-		assert.Equal(t, "{}", getUrlWithHost(t, statusUrl, statusHost))
+		assert.Equal(t, "{}", getURLWithHost(t, reqURL, statusHost))
 	})
 
 	t.Run("hipuma", func(t *testing.T) {
-		appUrl := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
-		appHost := "hipuma"
+		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+		reqHost := "hipuma"
 
-		assert.Equal(t, "Hi Puma!", getUrlWithHost(t, appUrl, appHost))
+		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, reqHost))
 	})
 
-	t.Run("restart.txt", func(t *testing.T) {
-		appUrl := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
-		appHost := "hipuma"
+	t.Run("hipuma/restart.txt", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+		reqHost := "hipuma"
 		appRestartTxt := filepath.Join(ProjectRoot, "etc", "rack-hi-puma", "tmp", "restart.txt")
 
-		assert.Equal(t, "Hi Puma!", getUrlWithHost(t, appUrl, appHost))
+		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, reqHost))
 
 		touchRestartTxt := exec.Command("sh", "-c", fmt.Sprintf("touch %s", appRestartTxt))
 
@@ -164,24 +169,24 @@ func TestMainPumaDev(t *testing.T) {
 	})
 
 	t.Run("unknown app", func(t *testing.T) {
-		statusUrl := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
 		statusHost := "doesnotexist"
 
-		assert.Equal(t, "unknown app", getUrlWithHost(t, statusUrl, statusHost))
+		assert.Equal(t, "unknown app", getURLWithHost(t, reqURL, statusHost))
 	})
 
 	t.Run("public/greeting.txt", func(t *testing.T) {
-		statusUrl := fmt.Sprintf("http://localhost:%d/greeting.txt", *fHTTPPort)
+		reqURL := fmt.Sprintf("http://localhost:%d/greeting.txt", *fHTTPPort)
 		statusHost := "static-site"
 
-		assert.Equal(t, "Hi Puma!", getUrlWithHost(t, statusUrl, statusHost))
+		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, statusHost))
 	})
 
 	t.Run("public/greeting.txt", func(t *testing.T) {
-		statusUrl := fmt.Sprintf("http://localhost:%d/foo", *fHTTPPort)
+		reqURL := fmt.Sprintf("http://localhost:%d/foo", *fHTTPPort)
 		statusHost := "static-site"
 
-		assert.Equal(t, "rack wuz here", getUrlWithHost(t, statusUrl, statusHost))
+		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
 	})
 }
 
