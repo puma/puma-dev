@@ -144,14 +144,14 @@ func TestMainPumaDev(t *testing.T) {
 		assert.Equal(t, "{}", getURLWithHost(t, reqURL, statusHost))
 	})
 
-	t.Run("hipuma", func(t *testing.T) {
+	t.Run("hipuma rack response", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
 		reqHost := "hipuma"
 
 		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, reqHost))
 	})
 
-	t.Run("hipuma/restart.txt", func(t *testing.T) {
+	t.Run("hipuma tmp/restart.txt", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
 		reqHost := "hipuma"
 		appRestartTxt := filepath.Join(ProjectRoot, "etc", "rack-hi-puma", "tmp", "restart.txt")
@@ -175,14 +175,14 @@ func TestMainPumaDev(t *testing.T) {
 		assert.Equal(t, "unknown app", getURLWithHost(t, reqURL, statusHost))
 	})
 
-	t.Run("public/greeting.txt", func(t *testing.T) {
+	t.Run("static-site public/greeting.txt", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/greeting.txt", *fHTTPPort)
 		statusHost := "static-site"
 
 		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, statusHost))
 	})
 
-	t.Run("public/greeting.txt", func(t *testing.T) {
+	t.Run("static-site rack response", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/foo", *fHTTPPort)
 		statusHost := "static-site"
 
