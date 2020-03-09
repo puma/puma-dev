@@ -123,11 +123,13 @@ func pollForEvent(t *testing.T, app string, event string, reason string) error {
 func TestMainPumaDev(t *testing.T) {
 	defer launchPumaDevBackgroundServerWithDefaults(t)()
 
-	rackAppPath := filepath.Join(ProjectRoot, "etc", "rack-hi-puma")
-	hipumaLinkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), "hipuma")
+	for k, v := range map[string]string{"rack-hi-puma": "hipuma", "static-hi-puma": "static-site"} {
+		appPath := filepath.Join(ProjectRoot, "etc", k)
+		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), v)
 
-	if err := os.Symlink(rackAppPath, hipumaLinkPath); err != nil {
-		assert.FailNow(t, err.Error())
+		if err := os.Symlink(appPath, linkPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
 	}
 
 	t.Run("status", func(t *testing.T) {
@@ -166,6 +168,20 @@ func TestMainPumaDev(t *testing.T) {
 		statusHost := "doesnotexist"
 
 		assert.Equal(t, "unknown app", getUrlWithHost(t, statusUrl, statusHost))
+	})
+
+	t.Run("public/greeting.txt", func(t *testing.T) {
+		statusUrl := fmt.Sprintf("http://localhost:%d/greeting.txt", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "Hi Puma!", getUrlWithHost(t, statusUrl, statusHost))
+	})
+
+	t.Run("public/greeting.txt", func(t *testing.T) {
+		statusUrl := fmt.Sprintf("http://localhost:%d/foo", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "rack wuz here", getUrlWithHost(t, statusUrl, statusHost))
 	})
 }
 
