@@ -3,6 +3,7 @@ package dev
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -147,12 +148,15 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	if app.Public && req.URL.Path != "/" {
-		path := filepath.Join(app.dir, "public", path.Clean(req.URL.Path))
+		safeURLPath := path.Clean(req.URL.Path)
+		path := filepath.Join(app.dir, "public", safeURLPath)
 
 		fi, err := os.Stat(path)
 		if err == nil && !fi.IsDir() {
-			http.ServeFile(w, req, path)
-			return httputil.ErrHandled
+			if ofile, err := os.Open(path); err == nil {
+				http.ServeContent(w, req, req.URL.Path, fi.ModTime(), io.ReadSeeker(ofile))
+				return httputil.ErrHandled
+			}
 		}
 	}
 
