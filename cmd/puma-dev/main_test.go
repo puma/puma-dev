@@ -186,14 +186,35 @@ func TestMainPumaDev(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/index.html", *fHTTPPort)
 		statusHost := "static-site"
 
-		assert.Equal(t, "<html><head><title>puma.dev</title></head><body><h1>Hi Puma!</h1></body></html>", getURLWithHost(t, reqURL, statusHost))
+		assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("static-site public/subfolder/index.html", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/subfolder/index.html", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "<html><h1>public/subfolder/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("static-site public/subfolder/../index.html", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/subfolder/../index.html", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
 	})
 
 	t.Run("static-site public/../index.html", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/../index.html", *fHTTPPort)
 		statusHost := "static-site"
 
-		assert.Equal(t, "invalid URL path", getURLWithHost(t, reqURL, statusHost))
+		assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("static-site public/subfolder/../../index.html", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/subfolder/../../index.html", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
 	})
 
 	t.Run("static-site rack response", func(t *testing.T) {
