@@ -182,6 +182,20 @@ func TestMainPumaDev(t *testing.T) {
 		assert.Equal(t, "Hi Puma!", getURLWithHost(t, reqURL, statusHost))
 	})
 
+	t.Run("static-site public/index.html", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/index.html", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "<html><head><title>puma.dev</title></head><body><h1>Hi Puma!</h1></body></html>", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("static-site public/../index.html", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/../index.html", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "invalid URL path", getURLWithHost(t, reqURL, statusHost))
+	})
+
 	t.Run("static-site rack response", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/foo", *fHTTPPort)
 		statusHost := "static-site"
