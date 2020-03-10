@@ -62,8 +62,6 @@ If you wish to have `puma-dev` use a port other than 80, pass it via the `-insta
 
 *NOTE:* If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working).
 
-If you're currently using `pow`, puma-dev taking control of `.test` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use the `.pdev` as an alternate development TLD.
-
 *NOTE:* If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
 
 ### Uninstall
