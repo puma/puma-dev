@@ -101,6 +101,14 @@ sudo trust anchor --store ~/.puma-dev-ssl/cert.crt
 trust list --filter=ca-anchors | grep -i -C2 Puma-dev
 ```
 
+For Debian, Ubuntu etc, try this:
+
+```sh
+sudo mkdir -p /usr/local/share/ca-certificates
+sudo cp ~/.puma-dev-ssl/cert.pem /usr/local/share/ca-certificates/puma-dev-pem.crt
+sudo update-ca-certificates
+```
+
 ### Domains (.test or similar)
 
 In order for requests to the `.test` (or any other custom) domain to resolve, install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver), making sure to use `test` (or the custom TLD you want to use) when configuring TLDs.
