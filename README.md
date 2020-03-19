@@ -86,6 +86,21 @@ Puma-dev supports Linux but requires the following additional installation steps
 
 The puma-dev root CA is generated (in `~/.puma-dev-ssl/`), but you will need to install and trust this as a Certificate Authority by adding it to your operating system's certificate trust store, or by trusting it directly in your favored browser (as some browsers will not share the operating system's trust store).
 
+First, start puma-dev to generate a CA certificate into `~/.puma-dev-ssl/cert.pem`.
+
+For Arch Linux, Fedora and other distributions using [p11-kit](https://p11-glue.github.io/p11-glue/p11-kit.html), try this:
+
+```sh
+# convert from PEM to DER
+openssl x509 -in ~/.puma-dev-ssl/cert.pem -outform der -out ~/.puma-dev-ssl/cert.crt
+
+# store certificate as an anchor in the trust policy store
+sudo trust anchor --store ~/.puma-dev-ssl/cert.crt
+
+# verify
+trust list --filter=ca-anchors | grep -i -C2 Puma-dev
+```
+
 ### Domains (.test or similar)
 
 In order for requests to the `.test` (or any other custom) domain to resolve, install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver), making sure to use `test` (or the custom TLD you want to use) when configuring TLDs.
