@@ -1,14 +1,13 @@
 package dev
 
 import (
+	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/miekg/dns"
+	"gopkg.in/tomb.v2"
 )
-
-const DefaultAddress = ":9253"
 
 type DNSResponder struct {
 	Address string
@@ -58,6 +57,7 @@ func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
+// Serve binds to
 func (d *DNSResponder) Serve(domains []string) error {
 	for _, domain := range domains {
 		dns.HandleFunc(domain+".", d.handleDNS)
@@ -65,26 +65,20 @@ func (d *DNSResponder) Serve(domains []string) error {
 
 	addr := d.Address
 	if addr == "" {
-		addr = DefaultAddress
+		return fmt.Errorf("invalid port specification in %v", d)
 	}
 
-	var wg sync.WaitGroup
+	var t tomb.Tomb
 
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
+	t.Go(func() error {
 		server := &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
-		server.ListenAndServe()
-	}()
+		return server.ListenAndServe()
+	})
 
-	go func() {
-		defer wg.Done()
+	t.Go(func() error {
 		server := &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
-		server.ListenAndServe()
-	}()
+		return server.ListenAndServe()
+	})
 
-	wg.Wait()
-
-	return nil
+	return t.Wait()
 }

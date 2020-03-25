@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -30,96 +32,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func generateLivePumaDevCertIfNotExist(t *testing.T) {
-	liveSupportPath := homedir.MustExpand(dev.SupportDir)
-	liveCertPath := filepath.Join(liveSupportPath, "cert.pem")
-	liveKeyPath := filepath.Join(liveSupportPath, "key.pem")
-
-	if !FileExists(liveCertPath) || !FileExists(liveKeyPath) {
-		MakeDirectoryOrFail(t, liveSupportPath)
-
-		if err := dev.GeneratePumaDevCertificateAuthority(liveCertPath, liveKeyPath); err != nil {
-			assert.FailNow(t, err.Error())
-		}
-	}
-}
-
-func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
-	StubCommandLineArgs()
-
-	SetFlagOrFail(t, "dir", testAppLinkDirPath)
-
-	generateLivePumaDevCertIfNotExist(t)
-
-	go func() {
-		main()
-	}()
-
-	err := retry.Do(
-		func() error {
-			_, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", *fHTTPPort), time.Duration(10*time.Second))
-			return err
-		},
-		retry.OnRetry(func(n uint, err error) {
-			log.Printf("#%d: %s\n", n, err)
-		}),
-	)
-
-	assert.NoError(t, err)
-
-	return func() {
-		RemoveDirectoryOrFail(t, testAppLinkDirPath)
-	}
-}
-
-func getURLWithHost(t *testing.T, url string, host string) string {
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Host = host
-
-	resp, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
-	defer resp.Body.Close()
-
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-
-	return strings.TrimSpace(string(bodyBytes))
-}
-
-func pollForEvent(t *testing.T, app string, event string, reason string) error {
-	return retry.Do(
-		func() error {
-			body := getURLWithHost(t, fmt.Sprintf("http://localhost:%d/events", *fHTTPPort), "puma-dev")
-			eachEvent := strings.Split(body, "\n")
-
-			for _, line := range eachEvent {
-				var rawEvt interface{}
-				if err := json.Unmarshal([]byte(line), &rawEvt); err != nil {
-					assert.FailNow(t, err.Error())
-				}
-				evt := rawEvt.(map[string]interface{})
-				LogDebugf("%+v", evt)
-
-				eventFound := (app == "" || evt["app"] == app) &&
-					(event == "" || evt["event"] == event) &&
-					(reason == "" || evt["reason"] == reason)
-
-				if eventFound {
-					return nil
-				}
-			}
-
-			return errors.New("not found")
-		},
-		retry.RetryIf(func(err error) bool {
-			return err.Error() == "not found"
-		}),
-	)
-}
-
 func TestMainPumaDev(t *testing.T) {
 	defer launchPumaDevBackgroundServerWithDefaults(t)()
 
@@ -136,6 +48,29 @@ func TestMainPumaDev(t *testing.T) {
 			assert.FailNow(t, err.Error())
 		}
 	}
+
+	t.Run("resolve dns", func(t *testing.T) {
+		if runtime.GOOS != "darwin" {
+			t.SkipNow()
+		}
+
+		PumaDevDNSDialer := func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			// TODO: use fPort if available, break out this test into main_darwin_test.go
+			return d.DialContext(ctx, "udp", "127.0.0.1:9253")
+		}
+
+		r := net.Resolver{
+			PreferGo: true,
+			Dial:     PumaDevDNSDialer,
+		}
+
+		ctx := context.Background()
+		ips, err := r.LookupIPAddr(ctx, "foo.test")
+
+		assert.NoError(t, err)
+		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
+	})
 
 	t.Run("status", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
@@ -293,4 +228,99 @@ func TestMain_allCheck_badArg(t *testing.T) {
 
 	assert.True(t, ok)
 	assert.False(t, exit.Success())
+}
+
+func generateLivePumaDevCertIfNotExist(t *testing.T) {
+	liveSupportPath := homedir.MustExpand(dev.SupportDir)
+	liveCertPath := filepath.Join(liveSupportPath, "cert.pem")
+	liveKeyPath := filepath.Join(liveSupportPath, "key.pem")
+
+	if !FileExists(liveCertPath) || !FileExists(liveKeyPath) {
+		MakeDirectoryOrFail(t, liveSupportPath)
+
+		if err := dev.GeneratePumaDevCertificateAuthority(liveCertPath, liveKeyPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
+	}
+}
+
+func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
+	address := fmt.Sprintf("localhost:%d", *fHTTPPort)
+	timeout := time.Duration(10 * time.Second)
+
+	if _, err := net.DialTimeout("tcp", address, timeout); err == nil {
+		return func() {}
+	}
+
+	StubCommandLineArgs()
+	SetFlagOrFail(t, "dir", testAppLinkDirPath)
+	generateLivePumaDevCertIfNotExist(t)
+
+	go func() {
+		main()
+	}()
+
+	err := retry.Do(
+		func() error {
+			_, err := net.DialTimeout("tcp", address, timeout)
+			return err
+		},
+		retry.OnRetry(func(n uint, err error) {
+			log.Printf("#%d: %s\n", n, err)
+		}),
+	)
+
+	assert.NoError(t, err)
+
+	return func() {
+		RemoveDirectoryOrFail(t, testAppLinkDirPath)
+	}
+}
+
+func getURLWithHost(t *testing.T, url string, host string) string {
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Host = host
+
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	defer resp.Body.Close()
+
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+
+	return strings.TrimSpace(string(bodyBytes))
+}
+
+func pollForEvent(t *testing.T, app string, event string, reason string) error {
+	return retry.Do(
+		func() error {
+			body := getURLWithHost(t, fmt.Sprintf("http://localhost:%d/events", *fHTTPPort), "puma-dev")
+			eachEvent := strings.Split(body, "\n")
+
+			for _, line := range eachEvent {
+				var rawEvt interface{}
+				if err := json.Unmarshal([]byte(line), &rawEvt); err != nil {
+					assert.FailNow(t, err.Error())
+				}
+				evt := rawEvt.(map[string]interface{})
+				LogDebugf("%+v", evt)
+
+				eventFound := (app == "" || evt["app"] == app) &&
+					(event == "" || evt["event"] == event) &&
+					(reason == "" || evt["reason"] == reason)
+
+				if eventFound {
+					return nil
+				}
+			}
+
+			return errors.New("not found")
+		},
+		retry.RetryIf(func(err error) bool {
+			return err.Error() == "not found"
+		}),
+	)
 }
