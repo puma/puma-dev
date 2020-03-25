@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,10 +46,15 @@ func generateLivePumaDevCertIfNotExist(t *testing.T) {
 }
 
 func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
+	address := fmt.Sprintf("localhost:%d", *fHTTPPort)
+	timeout := time.Duration(10 * time.Second)
+
+	if _, err := net.DialTimeout("tcp", address, timeout); err == nil {
+		return func() {}
+	}
+
 	StubCommandLineArgs()
-
 	SetFlagOrFail(t, "dir", testAppLinkDirPath)
-
 	generateLivePumaDevCertIfNotExist(t)
 
 	go func() {
@@ -57,7 +63,7 @@ func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
 
 	err := retry.Do(
 		func() error {
-			_, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", *fHTTPPort), time.Duration(10*time.Second))
+			_, err := net.DialTimeout("tcp", address, timeout)
 			return err
 		},
 		retry.OnRetry(func(n uint, err error) {
@@ -136,6 +142,24 @@ func TestMainPumaDev(t *testing.T) {
 			assert.FailNow(t, err.Error())
 		}
 	}
+
+	t.Run("resolve dns", func(t *testing.T) {
+		PumaDevDNSDialer := func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			return d.DialContext(ctx, "udp", fmt.Sprintf("127.0.0.1:%v", *fPort))
+		}
+
+		r := net.Resolver{
+			PreferGo: true,
+			Dial:     PumaDevDNSDialer,
+		}
+
+		ctx := context.Background()
+		ips, err := r.LookupIPAddr(ctx, "foo.test")
+
+		assert.NoError(t, err)
+		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
+	})
 
 	t.Run("status", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
