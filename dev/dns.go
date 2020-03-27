@@ -10,7 +10,9 @@ import (
 )
 
 type DNSResponder struct {
-	Address string
+	Address   string
+	udpServer *dns.Server
+	tcpServer *dns.Server
 }
 
 func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -71,13 +73,13 @@ func (d *DNSResponder) Serve(domains []string) error {
 	var t tomb.Tomb
 
 	t.Go(func() error {
-		server := &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
-		return server.ListenAndServe()
+		d.udpServer = &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
+		return d.udpServer.ListenAndServe()
 	})
 
 	t.Go(func() error {
-		server := &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
-		return server.ListenAndServe()
+		d.tcpServer = &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
+		return d.tcpServer.ListenAndServe()
 	})
 
 	return t.Wait()
