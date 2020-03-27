@@ -1,54 +1,57 @@
 package dev
 
 import (
-	"log"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
-var tDNSResponder DNSResponder
+var tDNSResponder *DNSResponder
 
-func TestServe(t *testing.T) {
-	tDNSResponder.Address = "localhost:31337"
-	errChan := make(chan error)
+func TestServeDNS(t *testing.T) {
+	errChan := make(chan error, 1)
+	domainList := []string{"test"}
+
+	tDNSResponder = NewDNSResponder("localhost:31337", domainList)
 
 	go func() {
-		if err := tDNSResponder.Serve([]string{"test"}); err != nil {
+		if err := tDNSResponder.Serve(); err != nil {
 			errChan <- err
 		}
 		close(errChan)
 	}()
 
-	tcpErr := retry.Do(
-		func() error {
-			if _, err := net.DialTimeout("tcp", "localhost:31337", time.Duration(10*time.Second)); err != nil {
-				return err
-			}
-			tDNSResponder.tcpServer.Shutdown()
-			return nil
-		},
-		retry.OnRetry(func(n uint, err error) {
-			log.Printf("#%d: %s\n", n, err)
-		}),
-	)
+	shortTimeout := time.Duration(1 * time.Second)
+	protocols := map[string](func() *dns.Server){
+		"tcp": func() *dns.Server { return tDNSResponder.tcpServer },
+		"udp": func() *dns.Server { return tDNSResponder.udpServer },
+	}
 
-	udpErr := retry.Do(
-		func() error {
-			if _, err := net.DialTimeout("udp", "localhost:31337", time.Duration(10*time.Second)); err != nil {
-				return err
-			}
-			tDNSResponder.udpServer.Shutdown()
-			return nil
-		},
-		retry.OnRetry(func(n uint, err error) {
-			log.Printf("#%d: %s\n", n, err)
-		}),
-	)
+	for protocol, serverLookup := range protocols {
+		dialError := retry.Do(
+			func() error {
+				if _, err := net.DialTimeout(protocol, "localhost:31337", shortTimeout); err != nil {
+					return err
+				}
 
-	assert.NoError(t, tcpErr)
-	assert.NoError(t, udpErr)
+				defer func() {
+					if server := serverLookup(); server != nil {
+						server.Shutdown()
+					} else {
+						assert.Fail(t, "tDNSResponder", "%s was nil", protocol)
+					}
+				}()
+
+				return nil
+			},
+		)
+
+		assert.NoError(t, dialError)
+	}
+
+	assert.NoError(t, <-errChan)
 }

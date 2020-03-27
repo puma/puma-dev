@@ -14,6 +14,5 @@ require (
 	github.com/vektra/errors v0.0.0-20140903201135-c64d83aba85a
 	github.com/vektra/neko v0.0.0-20141017182438-843f5ecf6932
 	golang.org/x/exp v0.0.0-20160805011819-6e7e2f19a280
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	gopkg.in/tomb.v2 v2.0.0-20140626144623-14b3d72120e8
 )

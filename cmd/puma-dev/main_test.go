@@ -1,19 +1,17 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -34,43 +32,6 @@ func TestMain(m *testing.M) {
 
 func TestMainPumaDev(t *testing.T) {
 	defer launchPumaDevBackgroundServerWithDefaults(t)()
-
-	testAppsToLink := map[string]string{
-		"rack-hi-puma":   "hipuma",
-		"static-hi-puma": "static-site",
-	}
-
-	for etcAppDir, appLinkName := range testAppsToLink {
-		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
-		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), appLinkName)
-
-		if err := os.Symlink(appPath, linkPath); err != nil {
-			assert.FailNow(t, err.Error())
-		}
-	}
-
-	t.Run("resolve dns", func(t *testing.T) {
-		if runtime.GOOS != "darwin" {
-			t.SkipNow()
-		}
-
-		PumaDevDNSDialer := func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{}
-			// TODO: use fPort if available, break out this test into main_darwin_test.go
-			return d.DialContext(ctx, "udp", "127.0.0.1:9253")
-		}
-
-		r := net.Resolver{
-			PreferGo: true,
-			Dial:     PumaDevDNSDialer,
-		}
-
-		ctx := context.Background()
-		ips, err := r.LookupIPAddr(ctx, "foo.test")
-
-		assert.NoError(t, err)
-		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
-	})
 
 	t.Run("status", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
@@ -246,34 +207,59 @@ func generateLivePumaDevCertIfNotExist(t *testing.T) {
 
 func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
 	address := fmt.Sprintf("localhost:%d", *fHTTPPort)
-	timeout := time.Duration(10 * time.Second)
+	timeout := time.Duration(2 * time.Second)
 
 	if _, err := net.DialTimeout("tcp", address, timeout); err == nil {
 		return func() {}
 	}
 
+	generateLivePumaDevCertIfNotExist(t)
+
 	StubCommandLineArgs()
 	SetFlagOrFail(t, "dir", testAppLinkDirPath)
-	generateLivePumaDevCertIfNotExist(t)
+	MakeDirectoryOrFail(t, testAppLinkDirPath)
+
+	testAppsToLink := map[string]string{
+		"hipuma":      "rack-hi-puma",
+		"static-site": "static-hi-puma",
+	}
+
+	for appLinkName, etcAppDir := range testAppsToLink {
+		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
+		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), appLinkName)
+
+		if err := os.Symlink(appPath, linkPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
+	}
 
 	go func() {
 		main()
 	}()
 
+	// wait for server to come up
 	err := retry.Do(
 		func() error {
 			_, err := net.DialTimeout("tcp", address, timeout)
 			return err
 		},
-		retry.OnRetry(func(n uint, err error) {
-			log.Printf("#%d: %s\n", n, err)
-		}),
 	)
 
 	assert.NoError(t, err)
 
 	return func() {
 		RemoveDirectoryOrFail(t, testAppLinkDirPath)
+		shutdown <- syscall.SIGTERM
+
+		// wait for server to shut down
+		retry.Do(
+			func() error {
+				if _, err := net.DialTimeout("tcp", address, timeout); err == nil {
+					return fmt.Errorf("server is still listening :%v", address)
+				}
+				return nil
+			},
+		)
 	}
 }
 

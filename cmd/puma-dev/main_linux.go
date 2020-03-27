@@ -23,6 +23,8 @@ var (
 	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
 	fStop     = flag.Bool("stop", false, "Stop all puma-dev servers")
+
+	shutdown = make(chan os.Signal, 1)
 )
 
 func main() {
@@ -73,12 +75,10 @@ func main() {
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-
-	signal.Notify(stop, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	go func() {
-		<-stop
+		<-shutdown
 		fmt.Printf("! Shutdown requested\n")
 		pool.Purge()
 		os.Exit(0)

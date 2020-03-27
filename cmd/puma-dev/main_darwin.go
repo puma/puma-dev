@@ -17,7 +17,7 @@ import (
 var (
 	fDebug    = flag.Bool("debug", false, "enable debug output")
 	fDomains  = flag.String("d", "test", "domains to handle, separate with :, defaults to test")
-	fPort     = flag.Int("dns-port", 9253, "port to listen on dns for")
+	fDNSPort  = flag.Int("dns-port", 9253, "port to listen on dns for")
 	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
 	fTLSPort  = flag.Int("https-port", 9283, "port to listen on https for")
 	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
@@ -34,6 +34,8 @@ var (
 
 	fCleanup   = flag.Bool("cleanup", false, "Cleanup old system settings")
 	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
+
+	shutdown = make(chan os.Signal, 1)
 )
 
 func main() {
@@ -110,18 +112,16 @@ func main() {
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-
-	signal.Notify(stop, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	go func() {
-		<-stop
+		<-shutdown
 		fmt.Printf("! Shutdown requested\n")
 		pool.Purge()
 		os.Exit(0)
 	}()
 
-	err = dev.ConfigureResolver(domains, *fPort)
+	err = dev.ConfigureResolver(domains, *fDNSPort)
 	if err != nil {
 		log.Fatalf("Unable to configure OS X resolver: %s", err)
 	}
@@ -133,7 +133,7 @@ func main() {
 
 	fmt.Printf("* Directory for apps: %s\n", dir)
 	fmt.Printf("* Domains: %s\n", strings.Join(domains, ", "))
-	fmt.Printf("* DNS Server port: %d\n", *fPort)
+	fmt.Printf("* DNS Server port: %d\n", *fDNSPort)
 
 	if *fLaunch {
 		fmt.Printf("* HTTP Server port: inherited from launchd\n")
@@ -143,15 +143,12 @@ func main() {
 		fmt.Printf("* HTTPS Server port: %d\n", *fTLSPort)
 	}
 
-	{
-		var dns dev.DNSResponder
-		dns.Address = fmt.Sprintf("127.0.0.1:%d", *fPort)
-		go func() {
-			if err := dns.Serve(domains); err != nil {
-				fmt.Printf("! DNS failed: %v\n", err)
-			}
-		}()
-	}
+	dns := dev.NewDNSResponder(fmt.Sprintf("127.0.0.1:%d", *fDNSPort), domains)
+	go func() {
+		if err := dns.Serve(); err != nil {
+			fmt.Printf("! DNS Server failed: %v\n", err)
+		}
+	}()
 
 	var http dev.HTTPServer
 
@@ -177,12 +174,12 @@ func main() {
 
 	go func() {
 		if err := http.ServeTLS(tlsSocketName); err != nil {
-			fmt.Printf("! HTTPS failed: %v\n", err)
+			fmt.Printf("! HTTPS Server failed: %v\n", err)
 		}
 	}()
 
 	err = http.Serve(socketName)
 	if err != nil {
-		log.Fatalf("Error listening: %s", err)
+		log.Fatalf("! HTTP Server failed: %s", err)
 	}
 }

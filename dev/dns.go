@@ -1,7 +1,6 @@
 package dev
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -10,9 +9,20 @@ import (
 )
 
 type DNSResponder struct {
-	Address   string
+	Address string
+	Domains []string
+
 	udpServer *dns.Server
 	tcpServer *dns.Server
+}
+
+func NewDNSResponder(address string, domains []string) *DNSResponder {
+	udp := &dns.Server{Addr: address, Net: "udp", TsigSecret: nil}
+	tcp := &dns.Server{Addr: address, Net: "tcp", TsigSecret: nil}
+
+	d := &DNSResponder{Address: address, Domains: domains, udpServer: udp, tcpServer: tcp}
+
+	return d
 }
 
 func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -59,26 +69,18 @@ func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-// Serve binds to
-func (d *DNSResponder) Serve(domains []string) error {
-	for _, domain := range domains {
+func (d *DNSResponder) Serve() error {
+	for _, domain := range d.Domains {
 		dns.HandleFunc(domain+".", d.handleDNS)
-	}
-
-	addr := d.Address
-	if addr == "" {
-		return fmt.Errorf("invalid port specification in %v", d)
 	}
 
 	var t tomb.Tomb
 
 	t.Go(func() error {
-		d.udpServer = &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
 		return d.udpServer.ListenAndServe()
 	})
 
 	t.Go(func() error {
-		d.tcpServer = &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
 		return d.tcpServer.ListenAndServe()
 	})
 
