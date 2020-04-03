@@ -15,13 +15,14 @@ import (
 func TestMainPumaDev_Darwin(t *testing.T) {
 	appLinkDir := homedir.MustExpand("~/.gotest-macos-puma-dev")
 
-	defer linkAppsForTesting(t, appLinkDir)()
+	defer linkAllTestApps(t, appLinkDir)()
 
-	SetFlagOrFail(t, "dns-port", "65053")
-	SetFlagOrFail(t, "http-port", "65080")
-	SetFlagOrFail(t, "https-port", "65443")
-
-	bootConfiguredLivePumaServer(t, appLinkDir)
+	configureAndBootPumaDevServer(t, map[string]string{
+		"dir":        appLinkDir,
+		"dns-port":   "65053",
+		"http-port":  "65080",
+		"https-port": "65443",
+	})
 
 	runPlatformAgnosticTestScenarios(t)
 
