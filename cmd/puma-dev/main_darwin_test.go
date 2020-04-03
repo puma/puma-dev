@@ -6,7 +6,6 @@ import (
 	"net"
 	"testing"
 
-	. "github.com/puma/puma-dev/dev/devtest"
 	"github.com/puma/puma-dev/homedir"
 
 	"github.com/stretchr/testify/assert"
