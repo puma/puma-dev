@@ -26,26 +26,18 @@ func TestServeDNS(t *testing.T) {
 	}()
 
 	shortTimeout := time.Duration(1 * time.Second)
-	protocols := map[string](func() *dns.Server){
-		"tcp": func() *dns.Server { return tDNSResponder.tcpServer },
-		"udp": func() *dns.Server { return tDNSResponder.udpServer },
+	protocols := map[string]*dns.Server{
+		"tcp": tDNSResponder.tcpServer,
+		"udp": tDNSResponder.udpServer,
 	}
 
-	for protocol, serverLookup := range protocols {
+	for protocol, server := range protocols {
 		dialError := retry.Do(
 			func() error {
 				if _, err := net.DialTimeout(protocol, "localhost:31337", shortTimeout); err != nil {
 					return err
 				}
-
-				defer func() {
-					if server := serverLookup(); server != nil {
-						server.Shutdown()
-					} else {
-						assert.Fail(t, "tDNSResponder", "%s was nil", protocol)
-					}
-				}()
-
+				server.Shutdown()
 				return nil
 			},
 		)

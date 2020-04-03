@@ -34,8 +34,6 @@ var (
 
 	fCleanup   = flag.Bool("cleanup", false, "Cleanup old system settings")
 	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
-
-	shutdown = make(chan os.Signal, 1)
 )
 
 func main() {
@@ -112,6 +110,7 @@ func main() {
 		}
 	}()
 
+	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	go func() {
