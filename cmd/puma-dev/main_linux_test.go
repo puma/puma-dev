@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	. "github.com/puma/puma-dev/dev/devtest"
 	"github.com/puma/puma-dev/homedir"
 )
 
