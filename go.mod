@@ -4,15 +4,19 @@ go 1.13
 
 require (
 	github.com/avast/retry-go v2.5.0+incompatible
-	github.com/bmizerany/pat v0.0.0-20160217103242-c068ca2f0aac
+	github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40
 	github.com/fsnotify/fsevents v0.1.1
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880
-	github.com/kardianos/osext v0.0.0-20151222153229-29ae4ffbc9a6
-	github.com/miekg/dns v0.0.0-20160726032027-db96a2b759cd
+	github.com/hashicorp/golang-lru v0.5.4
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
+	github.com/miekg/dns v1.1.29
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.5.1
 	github.com/vektra/errors v0.0.0-20140903201135-c64d83aba85a
 	github.com/vektra/neko v0.0.0-20141017182438-843f5ecf6932
-	gopkg.in/tomb.v2 v2.0.0-20140626144623-14b3d72120e8
+	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8 // indirect
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
+	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
