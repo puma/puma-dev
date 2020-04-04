@@ -1,7 +1,5 @@
 github.com/avast/retry-go v2.5.0+incompatible h1:8SaFqliw34WeeaPs+GEtMMkiwEsC2S6+YyqnLqI55Ks=
 github.com/avast/retry-go v2.5.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
-github.com/bmizerany/pat v0.0.0-20160217103242-c068ca2f0aac h1:X5YRFJiteUM3rajABEYJSzw1KWgmp1ulPFKxpfLm0M4=
-github.com/bmizerany/pat v0.0.0-20160217103242-c068ca2f0aac/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40 h1:y4B3+GPxKlrigF1ha5FFErxK+sr6sWxQovRMzwMhejo=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -11,16 +9,10 @@ github.com/fsnotify/fsevents v0.1.1 h1:/125uxJvvoSDDBPen6yUZbil8J9ydKZnnl3TWWmvn
 github.com/fsnotify/fsevents v0.1.1/go.mod h1:+d+hS27T6k5J8CRaPLKFgwKYcpS7GwW3Ule9+SC2ZRc=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
-github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880 h1:OaRuzt9oCKNui8cCskZijoKUwe+aCuuCwvx1ox8FNyw=
-github.com/hashicorp/golang-lru v0.0.0-20160207214719-a0d98a5f2880/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.4 h1:YDjusn29QI/Das2iO9M0BHnIbxPeyuCHsjMW+lJfyTc=
 github.com/hashicorp/golang-lru v0.5.4/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
-github.com/kardianos/osext v0.0.0-20151222153229-29ae4ffbc9a6 h1:yZAE+xNuc/2gmWV+s5UAb43LYLZQiqyngl6IUCQGJg0=
-github.com/kardianos/osext v0.0.0-20151222153229-29ae4ffbc9a6/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 h1:iQTw/8FWTuc7uiaSepXwyf3o52HaUYcV+Tu66S3F5GA=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
-github.com/miekg/dns v0.0.0-20160726032027-db96a2b759cd h1:CeapLRDOCwa+mOTigsBvhGS0TfEN8VchyBnh3f6QFtY=
-github.com/miekg/dns v0.0.0-20160726032027-db96a2b759cd/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.29 h1:xHBEhR+t5RzcFJjBLJlax2daXOrTYtr9z4WdKEfWFzg=
 github.com/miekg/dns v1.1.29/go.mod h1:KNUDUusw/aVsxyTYZM1oqvCicbwhgbNgztCETuNZ7xM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -63,8 +55,6 @@ golang.org/x/tools v0.0.0-20191216052735-49a3e744a425/go.mod h1:TB2adYChydJhpapK
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/tomb.v2 v2.0.0-20140626144623-14b3d72120e8 h1:EQ3aCG3c3nkUNxx6quE0Ux47RYExj7cJyRMxUXqPf6I=
-gopkg.in/tomb.v2 v2.0.0-20140626144623-14b3d72120e8/go.mod h1:BHsqpu/nsuzkT5BpiH1EMZPLyqSMM8JbIavyFACoFNk=
 gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 h1:yiW+nvdHb9LVqSHQBXfZCieqV4fzYhNBql77zY0ykqs=
 gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637/go.mod h1:BHsqpu/nsuzkT5BpiH1EMZPLyqSMM8JbIavyFACoFNk=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
