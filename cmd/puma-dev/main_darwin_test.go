@@ -16,12 +16,15 @@ func TestMainPumaDev_Darwin(t *testing.T) {
 
 	defer linkAllTestApps(t, appLinkDir)()
 
-	configureAndBootPumaDevServer(t, map[string]string{
+	serveErr := configureAndBootPumaDevServer(t, map[string]string{
+		"d":          "test:puma",
 		"dir":        appLinkDir,
 		"dns-port":   "65053",
 		"http-port":  "65080",
 		"https-port": "65443",
 	})
+
+	assert.NoError(t, serveErr)
 
 	runPlatformAgnosticTestScenarios(t)
 
@@ -39,8 +42,14 @@ func TestMainPumaDev_Darwin(t *testing.T) {
 
 		ctx := context.Background()
 		ips, err := r.LookupIPAddr(ctx, "foo.test")
-
 		assert.NoError(t, err)
 		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
+
+		ips, err = r.LookupIPAddr(ctx, "foo.puma")
+		assert.NoError(t, err)
+		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
+
+		_, err = r.LookupIPAddr(ctx, "foo.tlddoesnotexist")
+		assert.Error(t, err)
 	})
 }
