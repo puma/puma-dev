@@ -1,6 +1,7 @@
 package dev
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -15,17 +16,18 @@ var tDNSResponder *DNSResponder
 func TestServeDNS(t *testing.T) {
 	errChan := make(chan error, 1)
 	domainList := []string{"test"}
+	dnsAddress := "localhost:10053"
+	shortTimeout := time.Duration(1 * time.Second)
 
-	tDNSResponder = NewDNSResponder("localhost:31337", domainList)
+	tDNSResponder = NewDNSResponder(dnsAddress, domainList)
 
 	go func() {
+		defer close(errChan)
 		if err := tDNSResponder.Serve(); err != nil {
 			errChan <- err
 		}
-		close(errChan)
 	}()
 
-	shortTimeout := time.Duration(1 * time.Second)
 	protocols := map[string]*dns.Server{
 		"tcp": tDNSResponder.tcpServer,
 		"udp": tDNSResponder.udpServer,
@@ -34,10 +36,12 @@ func TestServeDNS(t *testing.T) {
 	for protocol, server := range protocols {
 		dialError := retry.Do(
 			func() error {
-				if _, err := net.DialTimeout(protocol, "localhost:31337", shortTimeout); err != nil {
+				if _, err := net.DialTimeout(protocol, dnsAddress, shortTimeout); err != nil {
 					return err
 				}
-				server.Shutdown()
+
+				assert.NoError(t, server.Shutdown())
+
 				return nil
 			},
 		)
@@ -45,5 +49,9 @@ func TestServeDNS(t *testing.T) {
 		assert.NoError(t, dialError)
 	}
 
-	assert.NoError(t, <-errChan)
+	responderError := <-errChan
+	if responderError != nil {
+		fmt.Printf("%+v", responderError)
+	}
+	assert.NoError(t, responderError)
 }
