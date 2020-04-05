@@ -99,6 +99,11 @@ func TestMain_allCheck_badArg(t *testing.T) {
 }
 
 func configureAndBootPumaDevServer(t *testing.T, mainFlags map[string]string) error {
+	StubCommandLineArgs()
+	for flagName, flagValue := range mainFlags {
+		SetFlagOrFail(t, flagName, flagValue)
+	}
+
 	address := fmt.Sprintf("localhost:%d", *fHTTPPort)
 	timeout := time.Duration(2 * time.Second)
 
@@ -107,11 +112,6 @@ func configureAndBootPumaDevServer(t *testing.T, mainFlags map[string]string) er
 	}
 
 	generateLivePumaDevCertIfNotExist(t)
-
-	StubCommandLineArgs()
-	for flagName, flagValue := range mainFlags {
-		SetFlagOrFail(t, flagName, flagValue)
-	}
 
 	go func() {
 		main()
