@@ -98,7 +98,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - test_high_sierra
+      # - test_high_sierra
       - test_mojave
       - test_catalina
 

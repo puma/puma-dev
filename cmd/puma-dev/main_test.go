@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -23,11 +22,107 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var testAppLinkDirPath = homedir.MustExpand("~/.gotest-puma-dev")
-
 func TestMain(m *testing.M) {
 	EnsurePumaDevDirectory()
-	os.Exit(m.Run())
+	testResult := m.Run()
+	os.Exit(testResult)
+}
+
+func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
+	StubCommandLineArgs("-V")
+	assert.True(t, *fVersion)
+
+	execStdOut := WithStdoutCaptured(func() {
+		result := execWithExitStatus()
+		assert.Equal(t, 0, result.exitStatusCode)
+		assert.Equal(t, true, result.shouldExit)
+	})
+
+	assert.Regexp(t, "^Version: devel \\(.+\\)\\n$", execStdOut)
+}
+
+func TestMain_execWithExitStatus_noFlag(t *testing.T) {
+	StubCommandLineArgs()
+	assert.False(t, *fVersion)
+
+	execStdOut := WithStdoutCaptured(func() {
+		result := execWithExitStatus()
+		assert.Equal(t, false, result.shouldExit)
+	})
+
+	assert.Equal(t, "", execStdOut)
+}
+
+func TestMain_execWithExitStatus_commandArgs(t *testing.T) {
+	StubCommandLineArgs("nosoupforyou")
+
+	execStdOut := WithStdoutCaptured(func() {
+		result := execWithExitStatus()
+		assert.Equal(t, 1, result.exitStatusCode)
+		assert.Equal(t, true, result.shouldExit)
+	})
+
+	assert.Equal(t, "Error: Unknown command: nosoupforyou\n\n", execStdOut)
+}
+
+func TestMain_allCheck_versionFlag(t *testing.T) {
+	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
+		StubCommandLineArgs("-V")
+		allCheck()
+
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestMain_allCheck_versionFlag")
+	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
+	err := cmd.Run()
+
+	assert.Nil(t, err)
+}
+
+func TestMain_allCheck_badArg(t *testing.T) {
+	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
+		StubCommandLineArgs("-badarg")
+		allCheck()
+
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestMain_allCheck_badArg")
+	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
+	err := cmd.Run()
+
+	exit, ok := err.(*exec.ExitError)
+
+	assert.True(t, ok)
+	assert.False(t, exit.Success())
+}
+
+func configureAndBootPumaDevServer(t *testing.T, mainFlags map[string]string) error {
+	StubCommandLineArgs()
+	for flagName, flagValue := range mainFlags {
+		SetFlagOrFail(t, flagName, flagValue)
+	}
+
+	address := fmt.Sprintf("localhost:%d", *fHTTPPort)
+	timeout := time.Duration(2 * time.Second)
+
+	if _, err := net.DialTimeout("tcp", address, timeout); err == nil {
+		return fmt.Errorf("server is already running")
+	}
+
+	generateLivePumaDevCertIfNotExist(t)
+
+	go func() {
+		main()
+	}()
+
+	return retry.Do(
+		func() error {
+			_, err := net.DialTimeout("tcp", address, timeout)
+			return err
+		},
+	)
 }
 
 func generateLivePumaDevCertIfNotExist(t *testing.T) {
@@ -41,34 +136,6 @@ func generateLivePumaDevCertIfNotExist(t *testing.T) {
 		if err := dev.GeneratePumaDevCertificateAuthority(liveCertPath, liveKeyPath); err != nil {
 			assert.FailNow(t, err.Error())
 		}
-	}
-}
-
-func launchPumaDevBackgroundServerWithDefaults(t *testing.T) func() {
-	StubCommandLineArgs()
-
-	SetFlagOrFail(t, "dir", testAppLinkDirPath)
-
-	generateLivePumaDevCertIfNotExist(t)
-
-	go func() {
-		main()
-	}()
-
-	err := retry.Do(
-		func() error {
-			_, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", *fHTTPPort), time.Duration(10*time.Second))
-			return err
-		},
-		retry.OnRetry(func(n uint, err error) {
-			log.Printf("#%d: %s\n", n, err)
-		}),
-	)
-
-	assert.NoError(t, err)
-
-	return func() {
-		RemoveDirectoryOrFail(t, testAppLinkDirPath)
 	}
 }
 
@@ -87,6 +154,28 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 
 	return strings.TrimSpace(string(bodyBytes))
+}
+
+func linkAllTestApps(t *testing.T, workingDirPath string) func() {
+	MakeDirectoryOrFail(t, workingDirPath)
+
+	testAppsToLink := map[string]string{
+		"hipuma":      "rack-hi-puma",
+		"static-site": "static-hi-puma",
+	}
+
+	for appLinkName, etcAppDir := range testAppsToLink {
+		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
+		linkPath := filepath.Join(homedir.MustExpand(workingDirPath), appLinkName)
+
+		if err := os.Symlink(appPath, linkPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
+	}
+
+	return func() {
+		RemoveDirectoryOrFail(t, workingDirPath)
+	}
 }
 
 func pollForEvent(t *testing.T, app string, event string, reason string) error {
@@ -120,23 +209,7 @@ func pollForEvent(t *testing.T, app string, event string, reason string) error {
 	)
 }
 
-func TestMainPumaDev(t *testing.T) {
-	defer launchPumaDevBackgroundServerWithDefaults(t)()
-
-	testAppsToLink := map[string]string{
-		"rack-hi-puma":   "hipuma",
-		"static-hi-puma": "static-site",
-	}
-
-	for etcAppDir, appLinkName := range testAppsToLink {
-		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
-		linkPath := filepath.Join(homedir.MustExpand(testAppLinkDirPath), appLinkName)
-
-		if err := os.Symlink(appPath, linkPath); err != nil {
-			assert.FailNow(t, err.Error())
-		}
-	}
-
+func runPlatformAgnosticTestScenarios(t *testing.T) {
 	t.Run("status", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/status", *fHTTPPort)
 		statusHost := "puma-dev"
@@ -223,74 +296,4 @@ func TestMainPumaDev(t *testing.T) {
 
 		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
 	})
-}
-
-func TestMain_execWithExitStatus_versionFlag(t *testing.T) {
-	StubCommandLineArgs("-V")
-	assert.True(t, *fVersion)
-
-	execStdOut := WithStdoutCaptured(func() {
-		result := execWithExitStatus()
-		assert.Equal(t, 0, result.exitStatusCode)
-		assert.Equal(t, true, result.shouldExit)
-	})
-
-	assert.Regexp(t, "^Version: devel \\(.+\\)\\n$", execStdOut)
-}
-
-func TestMain_execWithExitStatus_noFlag(t *testing.T) {
-	StubCommandLineArgs()
-	assert.False(t, *fVersion)
-
-	execStdOut := WithStdoutCaptured(func() {
-		result := execWithExitStatus()
-		assert.Equal(t, false, result.shouldExit)
-	})
-
-	assert.Equal(t, "", execStdOut)
-}
-
-func TestMain_execWithExitStatus_commandArgs(t *testing.T) {
-	StubCommandLineArgs("nosoupforyou")
-
-	execStdOut := WithStdoutCaptured(func() {
-		result := execWithExitStatus()
-		assert.Equal(t, 1, result.exitStatusCode)
-		assert.Equal(t, true, result.shouldExit)
-	})
-
-	assert.Equal(t, "Error: Unknown command: nosoupforyou\n\n", execStdOut)
-}
-
-func TestMain_allCheck_versionFlag(t *testing.T) {
-	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubCommandLineArgs("-V")
-		allCheck()
-
-		return
-	}
-
-	cmd := exec.Command(os.Args[0], "-test.run=TestMain_allCheck_versionFlag")
-	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
-	err := cmd.Run()
-
-	assert.Nil(t, err)
-}
-
-func TestMain_allCheck_badArg(t *testing.T) {
-	if os.Getenv("GO_TEST_SUBPROCESS") == "1" {
-		StubCommandLineArgs("-badarg")
-		allCheck()
-
-		return
-	}
-
-	cmd := exec.Command(os.Args[0], "-test.run=TestMain_allCheck_badArg")
-	cmd.Env = append(os.Environ(), "GO_TEST_SUBPROCESS=1")
-	err := cmd.Run()
-
-	exit, ok := err.(*exec.ExitError)
-
-	assert.True(t, ok)
-	assert.False(t, exit.Success())
 }

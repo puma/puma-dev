@@ -63,7 +63,6 @@ func main() {
 	pool.Events = &events
 
 	purge := make(chan os.Signal, 1)
-
 	signal.Notify(purge, syscall.SIGUSR1)
 
 	go func() {
@@ -73,12 +72,11 @@ func main() {
 		}
 	}()
 
-	stop := make(chan os.Signal, 1)
-
-	signal.Notify(stop, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 
 	go func() {
-		<-stop
+		<-shutdown
 		fmt.Printf("! Shutdown requested\n")
 		pool.Purge()
 		os.Exit(0)

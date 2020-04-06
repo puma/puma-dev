@@ -2,16 +2,27 @@ package dev
 
 import (
 	"net"
-	"sync"
 	"time"
 
 	"github.com/miekg/dns"
+	"gopkg.in/tomb.v2"
 )
-
-const DefaultAddress = ":9253"
 
 type DNSResponder struct {
 	Address string
+	Domains []string
+
+	udpServer *dns.Server
+	tcpServer *dns.Server
+}
+
+func NewDNSResponder(address string, domains []string) *DNSResponder {
+	udp := &dns.Server{Addr: address, Net: "udp", TsigSecret: nil}
+	tcp := &dns.Server{Addr: address, Net: "tcp", TsigSecret: nil}
+
+	d := &DNSResponder{Address: address, Domains: domains, udpServer: udp, tcpServer: tcp}
+
+	return d
 }
 
 func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -58,33 +69,20 @@ func (d *DNSResponder) handleDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func (d *DNSResponder) Serve(domains []string) error {
-	for _, domain := range domains {
+func (d *DNSResponder) Serve() error {
+	for _, domain := range d.Domains {
 		dns.HandleFunc(domain+".", d.handleDNS)
 	}
 
-	addr := d.Address
-	if addr == "" {
-		addr = DefaultAddress
-	}
+	var t tomb.Tomb
 
-	var wg sync.WaitGroup
+	t.Go(func() error {
+		return d.udpServer.ListenAndServe()
+	})
 
-	wg.Add(2)
+	t.Go(func() error {
+		return d.tcpServer.ListenAndServe()
+	})
 
-	go func() {
-		defer wg.Done()
-		server := &dns.Server{Addr: addr, Net: "udp", TsigSecret: nil}
-		server.ListenAndServe()
-	}()
-
-	go func() {
-		defer wg.Done()
-		server := &dns.Server{Addr: addr, Net: "tcp", TsigSecret: nil}
-		server.ListenAndServe()
-	}()
-
-	wg.Wait()
-
-	return nil
+	return t.Wait()
 }
