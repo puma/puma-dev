@@ -3,7 +3,7 @@ package watch
 import (
 	"os"
 
-	"golang.org/x/exp/inotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 func Watch(restart string, done <-chan struct{}, change func()) error {
@@ -12,12 +12,12 @@ func Watch(restart string, done <-chan struct{}, change func()) error {
 		return err
 	}
 
-	watcher, err := inotify.NewWatcher()
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
 
-	err = watcher.AddWatch(restart, inotify.IN_ATTRIB|inotify.IN_MODIFY)
+	err = watcher.Add(restart)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func Watch(restart string, done <-chan struct{}, change func()) error {
 
 	for {
 		select {
-		case <-watcher.Event:
+		case <-watcher.Events:
 			cur, err := os.Stat(restart)
 			if err != nil {
 				return err
