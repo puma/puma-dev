@@ -243,6 +243,27 @@ That CA cert is used to dynamically create certificates for your apps when acces
 
 When `-install` is used (and let's be honest, that's how you want to use puma-dev), then it listens on port 443 by default (configurable with `-install-https-port`) so you can just do `https://blah.test` to access your app via https.
 
+### Webpack Dev Server
+
+If your app uses HTTPS then the Webpack Dev Server (WDS) should be run via SSL too to avoid browser "Mixed content" errors. While the WDS can generate its own certificates, these expire regularly and often need re-trusting in a new tab to avoid repeating console errors about `/sockjs-node/info?t=123` that break the auto-reloading of assets via WDS. 
+
+To fix this leave WDS running in plain HTTP mode and combine Puma-dev's proxy and HTTPS features (see above). 
+
+Here's how to configure Rails and the Webpacker gem, for an example app already running at `https://blah.test`:
+
+* Run `echo 3035 > ~/.puma-dev/webpack.blah` to set up the proxy to the WDS
+* Edit `config/environments/development.rb` to add `config.action_controller.asset_host = '//webpack.blah.test'`
+* Edit `config/webpacker.yml` to match:
+
+```
+dev_server: 
+  https: false
+  host: localhost
+  port: 3035
+  public: webpack.blah.test
+```
+You can now restart the app with `puma-dev -stop` and start WDS with `bin/webpack-dev-server`.
+
 ### Websockets
 
 Puma-dev supports websockets natively but you may need to tell your web framework to allow the connections.
