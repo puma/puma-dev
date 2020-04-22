@@ -14,7 +14,7 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 * __https__ - it Just Works!
 * Supports __Rails 5 actioncable__ via rack.hijack websockets
 * Supports macOS __and__ Linux
-* The honorary `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
+* The venerable `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
 
 ## Installation
 First, ensure that the [`puma`](https://github.com/puma/puma) gem is installed. It probably belongs in the Gemfile of the application(s) you're trying to serve via puma-dev.
