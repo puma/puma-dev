@@ -59,7 +59,16 @@ func main() {
 	}
 
 	if *fInstall {
-		err := dev.InstallIntoSystem(*fInstallPort, *fInstallTLS, *fDir, *fDomains, (*fTimeout).String())
+		err := dev.InstallIntoSystem(&dev.InstallIntoSystemArgs{
+			ApplinkDirPath:     *fDir,
+			Domains:            *fDomains,
+			LaunchAgentDirPath: "~/Library/LaunchAgents",
+			ListenPort:         *fInstallPort,
+			LogfilePath:        "~/Library/Logs/puma-dev.log",
+			Timeout:            (*fTimeout).String(),
+			TlsPort:            *fInstallTLS,
+		})
+
 		if err != nil {
 			log.Fatalf("Unable to install into system: %s", err)
 		}

@@ -95,7 +95,17 @@ func Cleanup() {
 	}
 }
 
-func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) error {
+type InstallIntoSystemArgs struct {
+	ListenPort         int
+	TlsPort            int
+	LogfilePath        string
+	ApplinkDirPath     string
+	LaunchAgentDirPath string
+	Domains            string
+	Timeout            string
+}
+
+func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 	err := SetupOurCert()
 	if err != nil {
 		return err
@@ -154,10 +164,10 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 </plist>
 `
 
-	logPath := homedir.MustExpand("~/Library/Logs/puma-dev.log")
-
-	plistDir := homedir.MustExpand("~/Library/LaunchAgents")
-	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
+	logPath := homedir.MustExpand(config.LogfilePath)
+	plistDir := homedir.MustExpand(config.LaunchAgentDirPath)
+	plist := filepath.Join(plistDir, "io.puma.dev.plist")
+	dir := config.ApplinkDirPath
 
 	err = os.MkdirAll(plistDir, 0644)
 
@@ -167,7 +177,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, dir, domains, timeout, listenPort, tlsPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.ListenPort, config.TlsPort, logPath, logPath)),
 		0644,
 	)
 
@@ -183,7 +193,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 		return errors.Context(err, "loading plist into launchctl")
 	}
 
-	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", listenPort, tlsPort)
+	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", config.ListenPort, config.TlsPort)
 
 	return nil
 }
