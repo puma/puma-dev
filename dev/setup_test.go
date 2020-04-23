@@ -12,28 +12,30 @@ import (
 )
 
 func TestInstallIntoSystem(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-macos-puma-dev-install-into-system")
-	baseTmpDir := homedir.MustExpand("~/.gotest-puma-dev")
+	appLinkDir := homedir.MustExpand("~/.gotest-dev-puma-dev")
+	tmpDir := homedir.MustExpand("~/.gotest-dev-puma-dev-homedir")
 
 	defer MakeDirectoryOrFail(t, appLinkDir)()
-	defer MakeDirectoryOrFail(t, baseTmpDir)()
+	defer MakeDirectoryOrFail(t, tmpDir)()
 
-	launchAgentDir := filepath.Join(baseTmpDir, "Library", "LaunchAgents")
+	launchAgentDir := filepath.Join(tmpDir, "Library", "LaunchAgents")
 	assert.False(t, DirExists(launchAgentDir))
 
 	err := InstallIntoSystem(&InstallIntoSystemArgs{
-		ApplinkDirPath:     appLinkDir,
-		Domains:            "test:localhost",
-		LaunchAgentDirPath: "~/.gotest/Library/LaunchAgents",
 		ListenPort:         10080,
-		LogfilePath:        "~/.gotest/Library/Logs",
-		Timeout:            "10s",
 		TlsPort:            10443,
+		Domains:            "test:localhost",
+		Timeout:            "10s",
+		ApplinkDirPath:     appLinkDir,
+		LaunchAgentDirPath: launchAgentDir,
+		LogfilePath:        "~/.gotest-dev-puma-dev-homedir/Library/Logs/puma-dev.log",
 	})
 
 	assert.NoError(t, err)
 
 	info, err := os.Stat(launchAgentDir)
-	assert.NoError(t, err)
-	assert.True(t, info.IsDir())
+	if assert.NoError(t, err) {
+		assert.Equal(t, 0755, info.Mode())
+		assert.True(t, info.IsDir())
+	}
 }

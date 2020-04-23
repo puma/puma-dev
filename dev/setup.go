@@ -169,7 +169,7 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 	plist := filepath.Join(plistDir, "io.puma.dev.plist")
 	dir := config.ApplinkDirPath
 
-	err = os.MkdirAll(plistDir, 0644)
+	err = os.MkdirAll(plistDir, 0755)
 
 	if err != nil {
 		return errors.Context(err, "creating LaunchAgent directory")
