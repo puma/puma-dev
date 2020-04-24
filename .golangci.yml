@@ -2,7 +2,5 @@ run:
   # default concurrency is a available CPU number
   timeout: 1m
   tests: true
-  skip-dirs:
-    - httpu
-    - httputil
-    - linebuffer
+service:
+  golangci-lint-version: 1.24.x # use the fixed version to not introduce new linters unexpectedly
