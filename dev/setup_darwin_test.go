@@ -49,6 +49,23 @@ func TestInstallIntoSystem(t *testing.T) {
 	AssertDirUmask(t, "0755", launchAgentDir)
 }
 
+func TestInstallIntoSystem_superuser(t *testing.T) {
+	os.Setenv("SUDO_USER", os.Getenv("USER"))
+	defer os.Unsetenv("SUDO_USER")
+
+	err := InstallIntoSystem(&InstallIntoSystemArgs{
+		ListenPort:         10080,
+		TlsPort:            10443,
+		Domains:            "test:localhost",
+		Timeout:            "5s",
+		ApplinkDirPath:     "/tmp/gotest-dummy-applinkdir",
+		LaunchAgentDirPath: "/tmp/gotest-dummy-launchagent",
+		LogfilePath:        "/tmp/gotest-dummy-logs/dummy.log",
+	})
+
+	assert.Error(t, err)
+}
+
 func AssertDirUmask(t *testing.T, expectedUmask, path string) {
 	info, err := os.Stat(path)
 	if !assert.NoError(t, err) {

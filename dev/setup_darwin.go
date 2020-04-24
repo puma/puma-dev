@@ -106,6 +106,10 @@ type InstallIntoSystemArgs struct {
 }
 
 func InstallIntoSystem(config *InstallIntoSystemArgs) error {
+	if sudo := os.Getenv("SUDO_USER"); sudo != "" {
+		return fmt.Errorf("cannot run as superuser")
+	}
+
 	err := SetupOurCert()
 	if err != nil {
 		return err
@@ -186,10 +190,10 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 	}
 
 	// Unload a previous one if need be.
+	// nolint:errcheck noop looks like a failure
 	exec.Command("launchctl", "unload", plist).Run()
 
-	err = exec.Command("launchctl", "load", plist).Run()
-	if err != nil {
+	if err = exec.Command("launchctl", "load", plist).Run(); err != nil {
 		return errors.Context(err, "loading plist into launchctl")
 	}
 
