@@ -198,15 +198,6 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 	return nil
 }
 
-func Stop() error {
-	err := exec.Command("pkill", "-USR1", "puma-dev").Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func Uninstall(domains []string) {
 	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
 
