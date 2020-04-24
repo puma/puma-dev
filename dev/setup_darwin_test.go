@@ -8,10 +8,14 @@ import (
 	"strconv"
 	"testing"
 
+	. "github.com/puma/puma-dev/dev/devtest"
+
+	"github.com/puma/puma-dev/homedir"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInstallIntoSystem(t *testing.T) {
+
 	appLinkDir, _ := ioutil.TempDir("", ".puma-dev")
 	libDir, _ := ioutil.TempDir("", "Library")
 	logFilePath := filepath.Join(libDir, "Logs", "puma-dev.log")
@@ -25,6 +29,8 @@ func TestInstallIntoSystem(t *testing.T) {
 		os.RemoveAll(logFilePath)
 		os.RemoveAll(libDir)
 	}()
+
+	generateLivePumaDevCertIfNotExist(t)
 
 	err := InstallIntoSystem(&InstallIntoSystemArgs{
 		ListenPort:         10080,
@@ -50,5 +56,19 @@ func AssertDirUmask(t *testing.T, expectedUmask, path string) {
 
 		actualUmask := "0" + strconv.FormatInt(int64(info.Mode().Perm()), 8)
 		assert.Equal(t, expectedUmask, actualUmask)
+	}
+}
+
+func generateLivePumaDevCertIfNotExist(t *testing.T) {
+	liveSupportPath := homedir.MustExpand(SupportDir)
+	liveCertPath := filepath.Join(liveSupportPath, "cert.pem")
+	liveKeyPath := filepath.Join(liveSupportPath, "key.pem")
+
+	if !FileExists(liveCertPath) || !FileExists(liveKeyPath) {
+		MakeDirectoryOrFail(t, liveSupportPath)
+
+		if err := GeneratePumaDevCertificateAuthority(liveCertPath, liveKeyPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
 	}
 }
