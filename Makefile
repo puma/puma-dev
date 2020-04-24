@@ -25,14 +25,14 @@ test:
 coverage: test
 	go tool cover -html=coverage.out
 
-test-macos-development-setup-install: build
+test-macos-interactive-dev-setup-install: build
 	sudo launchctl unload "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
 	rm "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
 	rm "$$HOME/Library/Logs/puma-dev.log"
-	./puma-dev -d 'test:localhost:loc.al' -setup
-	./puma-dev -d 'test:localhost:loc.al' -install
+	sudo ./puma-dev -d 'test:localhost:loc.al:puma' -setup
+	./puma-dev -d 'test:localhost:loc.al:puma' -install
 	test -f "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
-	sleep 5
+	sleep 2
 	test -f "$$HOME/Library/Logs/puma-dev.log"
 
 test-macos-interactive-certificate-install:
