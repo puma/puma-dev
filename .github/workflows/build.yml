@@ -1,0 +1,25 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        go-version: [1.13.x]
+
+    name: go-${{ matrix.go-version }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - uses: actions/checkout@v2
+
+      - name: go test
+        run: |
+          make release
