@@ -44,6 +44,7 @@ func TestServeDNS(t *testing.T) {
 
 				return nil
 			},
+			retry.Attempts(3),
 		)
 
 		assert.NoError(t, dialError)

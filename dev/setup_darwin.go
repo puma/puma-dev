@@ -95,7 +95,21 @@ func Cleanup() {
 	}
 }
 
-func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) error {
+type InstallIntoSystemArgs struct {
+	ListenPort         int
+	TlsPort            int
+	LogfilePath        string
+	ApplinkDirPath     string
+	LaunchAgentDirPath string
+	Domains            string
+	Timeout            string
+}
+
+func InstallIntoSystem(config *InstallIntoSystemArgs) error {
+	if sudo := os.Getenv("SUDO_USER"); sudo != "" {
+		return fmt.Errorf("cannot run as superuser")
+	}
+
 	err := SetupOurCert()
 	if err != nil {
 		return err
@@ -154,12 +168,12 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 </plist>
 `
 
-	logPath := homedir.MustExpand("~/Library/Logs/puma-dev.log")
+	logPath := homedir.MustExpand(config.LogfilePath)
+	plistDir := homedir.MustExpand(config.LaunchAgentDirPath)
+	plist := filepath.Join(plistDir, "io.puma.dev.plist")
+	dir := config.ApplinkDirPath
 
-	plistDir := homedir.MustExpand("~/Library/LaunchAgents")
-	plist := homedir.MustExpand("~/Library/LaunchAgents/io.puma.dev.plist")
-
-	err = os.MkdirAll(plistDir, 0644)
+	err = os.MkdirAll(plistDir, 0755)
 
 	if err != nil {
 		return errors.Context(err, "creating LaunchAgent directory")
@@ -167,7 +181,7 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, dir, domains, timeout, listenPort, tlsPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.ListenPort, config.TlsPort, logPath, logPath)),
 		0644,
 	)
 
@@ -176,23 +190,14 @@ func InstallIntoSystem(listenPort, tlsPort int, dir, domains, timeout string) er
 	}
 
 	// Unload a previous one if need be.
+	// nolint:errcheck noop looks like a failure
 	exec.Command("launchctl", "unload", plist).Run()
 
-	err = exec.Command("launchctl", "load", plist).Run()
-	if err != nil {
+	if err = exec.Command("launchctl", "load", plist).Run(); err != nil {
 		return errors.Context(err, "loading plist into launchctl")
 	}
 
-	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", listenPort, tlsPort)
-
-	return nil
-}
-
-func Stop() error {
-	err := exec.Command("pkill", "-USR1", "puma-dev").Run()
-	if err != nil {
-		return err
-	}
+	fmt.Printf("* Installed puma-dev on ports: http %d, https %d\n", config.ListenPort, config.TlsPort)
 
 	return nil
 }

@@ -1,11 +1,13 @@
-all:
+build:
 	go build ./cmd/puma-dev
+
+clean:
+	rm -f ./puma-dev
 
 install:
 	go install ./cmd/puma-dev
 
 lint:
-	find . -name '*.go' -not -wholename './vendor/*' -exec golint '{}' \;
 	golangci-lint run
 
 release:
@@ -28,5 +30,16 @@ coverage: test
 
 test-macos-interactive-certificate-install:
 	go test -coverprofile=coverage_osx.out -v -test.run=TestSetupOurCert_InteractiveCertificateInstall ./dev
+
+test-macos-interactive-dev-setup-install: clean build
+	sudo launchctl unload "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
+	rm -rf "$$HOME/Library/ApplicationSupport/io.puma.dev"
+	rm "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
+	rm "$$HOME/Library/Logs/puma-dev.log"
+	sudo ./puma-dev -d 'test:localhost:loc.al:puma' -setup
+	./puma-dev -d 'test:localhost:loc.al:puma' -install
+	test -f "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
+	sleep 2
+	test -f "$$HOME/Library/Logs/puma-dev.log"
 
 .PHONY: all release

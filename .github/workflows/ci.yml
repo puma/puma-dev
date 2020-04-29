@@ -39,9 +39,3 @@ jobs:
       - run: go mod download
 
       - run: go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
-
-      - run: go tool cover -html=coverage.out -o coverage.html
-      - uses: actions/upload-artifact@v1
-        with:
-          name: go-${{ matrix.go-version }}-${{ matrix.os }}
-          path: coverage.html
