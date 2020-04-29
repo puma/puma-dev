@@ -24,7 +24,7 @@ test:
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
 coverage: test
-	go tool cover -html=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
 
 test-macos-interactive-certificate-install:
 	go test -coverprofile=coverage_osx.out -v -test.run=TestSetupOurCert_InteractiveCertificateInstall ./dev

@@ -4,6 +4,7 @@
 /puma-dev
 /tmp
 /coverage*.out
+/coverage.html
 
 .ruby-version
 
