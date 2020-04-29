@@ -15,7 +15,7 @@ jobs:
         go-version: [1.13.x, 1.14.x]
         ruby-version: [2.5]
 
-    name: ${{ matrix.os }}/go-${{ matrix.go-version }}
+    name: ${{ matrix.os }} / go-${{ matrix.go-version }}
     steps:
       - uses: actions/setup-go@v1
         with:
