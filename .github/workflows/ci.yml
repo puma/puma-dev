@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        go-version: [1.13.x, 1.14.x]
+        ruby-version: [2.5]
+
+    name: ${{ matrix.os }} / go-${{ matrix.go-version }}
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+
+      - uses: actions/checkout@v2
+
+      - run: gem install puma
+
+      - if: matrix.os == 'macos-latest'
+        run: |
+          sw_vers
+          sudo mkdir -p /etc/resolver;
+          sudo chmod 0775 /etc/resolver;
+          sudo chown :staff /etc/resolver;
+
+      - run: go mod download
+
+      - run: go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
+
+      - run: go tool cover -html=coverage.out -o coverage.html
+      - uses: actions/upload-artifact@v1
+        with:
+          name: go-${{ matrix.go-version }}-${{ matrix.os }}
+          path: coverage.html
