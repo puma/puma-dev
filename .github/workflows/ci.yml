@@ -15,7 +15,7 @@ jobs:
         go-version: [1.13.x, 1.14.x]
         ruby-version: [2.5]
 
-    name: go-${{ matrix.go-version }} on ${{ matrix.os }}
+    name: ${{ matrix.os }}/go-${{ matrix.go-version }}
     steps:
       - uses: actions/setup-go@v1
         with:
@@ -41,3 +41,10 @@ jobs:
           go version
           go mod download
           go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
+
+      - run: go tool -n cover -html=coverage.out -o coverage.html
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: ${{ matrix.os }}/go-${{ matrix.go-version }}
+          path: coverage.html
