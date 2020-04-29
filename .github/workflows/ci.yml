@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [ master ]
 
-# FIXME will fail to build on forks
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
