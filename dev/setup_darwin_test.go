@@ -15,7 +15,6 @@ import (
 )
 
 func TestInstallIntoSystem(t *testing.T) {
-
 	appLinkDir, _ := ioutil.TempDir("", ".puma-dev")
 	libDir, _ := ioutil.TempDir("", "Library")
 	logFilePath := filepath.Join(libDir, "Logs", "puma-dev.log")
