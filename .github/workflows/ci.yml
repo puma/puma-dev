@@ -36,14 +36,11 @@ jobs:
           sudo chmod 0775 /etc/resolver;
           sudo chown :staff /etc/resolver;
 
-      - name: go test
-        run: |
-          go version
-          go mod download
-          go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
+      - run: go mod download
 
-      - run: go tool -n cover -html=coverage.out -o coverage.html
+      - run: go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
 
+      - run: go tool cover -html=coverage.out -o coverage.html
       - uses: actions/upload-artifact@v1
         with:
           name: go-${{ matrix.go-version }}-${{ matrix.os }}
