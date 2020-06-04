@@ -181,6 +181,7 @@ Puma-dev supports loading environment variables before puma starts. It checks fo
 * `.env`
 * `.powrc`
 * `.powenv`
+* `.pumaenv`
 
 Additionally, puma-dev uses a few environment variables to control how puma is started that you can overwrite in your loaded shell config.
 
