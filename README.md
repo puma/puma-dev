@@ -249,12 +249,19 @@ When `-install` is used (and let's be honest, that's how you want to use puma-de
 
 If your app uses HTTPS then the Webpack Dev Server (WDS) should be run via SSL too to avoid browser "Mixed content" errors. While the WDS can generate its own certificates, these expire regularly and often need re-trusting in a new tab to avoid repeating console errors about `/sockjs-node/info?t=123` that break the auto-reloading of assets via WDS.
 
-To fix this leave WDS running in plain HTTP mode and combine Puma-dev's proxy and HTTPS features (see above).
+To fix this leave WDS running in plain HTTP mode and combine Puma-dev's [proxy](#proxy-support) and [HTTPS](#https) features.
 
 Here's how to configure Rails and the Webpacker gem, for an example app already running at `https://blah.test`:
 
 * Run `echo 3035 > ~/.puma-dev/webpack.blah` to set up the proxy to the WDS
-* Edit `config/environments/development.rb` to add `config.action_controller.asset_host = '//webpack.blah.test'`
+* Edit `config/environments/development.rb` to include one of the following:
+```
+# for webpacker-only projects
+config.action_controller.asset_host = '//webpack.blah.test'
+
+# for hybrid webpacker/sprockets projects
+config.action_controller.asset_host = proc { |source| '//webpack.blah.test' if source.starts_with?('/packs') }
+```
 * Edit `config/webpacker.yml` to match:
 
 ```
