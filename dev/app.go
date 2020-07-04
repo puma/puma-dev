@@ -256,10 +256,10 @@ if test -e .pumaenv; then
 fi
 
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
-	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
+	exec bundle exec puma -w $WORKERS -t 0:$THREADS -C $CONFIG --tag puma-dev:%s -b unix:%s
 fi
 
-exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
+exec puma -w $WORKERS -t 0:$THREADS -C $CONFIG --tag puma-dev:%s -b unix:%s'
 `
 
 func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
