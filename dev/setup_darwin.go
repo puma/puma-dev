@@ -203,7 +203,7 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 }
 
 func Uninstall(launchAgentDirPath string, domains []string) {
- 	// Default: ~/Library/LaunchAgents/
+	// Default: ~/Library/LaunchAgents/
 	plistDir := homedir.MustExpand(launchAgentDirPath)
 	plist := filepath.Join(plistDir, "io.puma.dev.plist")
 
@@ -217,7 +217,7 @@ func Uninstall(launchAgentDirPath string, domains []string) {
 		fmt.Printf("! Unable to remove all Puma-dev CA certs from macOS keychain: %s\n", err)
 	} else {
 		fmt.Printf("* Removed all Puma-dev CA certs from macOS keychain\n")
-		os.RemoveAll(SupportDir)
+		os.RemoveAll(homedir.MustExpand(SupportDir))
 	}
 
 	for _, d := range domains {
