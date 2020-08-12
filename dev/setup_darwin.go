@@ -216,8 +216,9 @@ func Uninstall(launchAgentDirPath string, domains []string) {
 	if err := DeleteAllPumaDevCAFromDefaultKeychain(); err != nil {
 		fmt.Printf("! Unable to remove all Puma-dev CA certs from macOS keychain: %s\n", err)
 	} else {
-		fmt.Printf("* Removed all Puma-dev CA certs from macOS keychain\n")
-		os.RemoveAll(homedir.MustExpand(SupportDir))
+		expandedSupportDir := homedir.MustExpand(SupportDir)
+		fmt.Printf("* Removed all Puma-dev CA certs from macOS keychain.\n")
+		fmt.Printf("! Before re-installing, please delete %s\n", expandedSupportDir)
 	}
 
 	for _, d := range domains {

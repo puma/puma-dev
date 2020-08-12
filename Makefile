@@ -32,11 +32,13 @@ test-macos-interactive:
 	@echo "This will break your existing puma-dev setup. You'll need to run setup/install again. Cool? Cool."
 	@echo "Also, prepare to provide your system password several times."
 	@read -p "Press [return] to continue..."
+	rm -rf "$$HOME/Library/Application\ Support/io.puma.dev"
 	go test ./... -v -test.run=DarwinInteractive -count=1
+	rm -rf "$$HOME/Library/Application\ Support/io.puma.dev"
 
 test-macos-manual-setup-install: clean build
 	sudo launchctl unload "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
-	rm -rf "$$HOME/Library/ApplicationSupport/io.puma.dev"
+	rm -rf "$$HOME/Library/Application\ Support/io.puma.dev"
 	rm -f "$$HOME/Library/LaunchAgents/io.puma.dev.plist"
 	rm -f "$$HOME/Library/Logs/puma-dev.log"
 
