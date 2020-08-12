@@ -202,7 +202,7 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 	return nil
 }
 
-func Uninstall(launchAgentDirPath string, domains []string) {
+func Uninstall(launchAgentDirPath string, domains []string) func() {
 	// Default: ~/Library/LaunchAgents/
 	plistDir := homedir.MustExpand(launchAgentDirPath)
 	plist := filepath.Join(plistDir, "io.puma.dev.plist")
@@ -212,17 +212,20 @@ func Uninstall(launchAgentDirPath string, domains []string) {
 	os.Remove(plist)
 	fmt.Printf("* Removed puma-dev from automatically running\n")
 
-	// Remove all `Puma-dev CA` certificate entries from macOS keychain
-	if err := DeleteAllPumaDevCAFromDefaultKeychain(); err != nil {
-		fmt.Printf("! Unable to remove all Puma-dev CA certs from macOS keychain: %s\n", err)
-	} else {
-		expandedSupportDir := homedir.MustExpand(SupportDir)
-		fmt.Printf("* Removed all Puma-dev CA certs from macOS keychain.\n")
-		fmt.Printf("! Before re-installing, please delete %s\n", expandedSupportDir)
-	}
-
 	for _, d := range domains {
 		os.Remove(filepath.Join("/etc/resolver", d))
 		fmt.Printf("* Removed domain '%s'\n", d)
+	}
+
+	// Remove all `Puma-dev CA` certificate entries from macOS keychain
+	if err := DeleteAllPumaDevCAFromDefaultKeychain(); err != nil {
+		fmt.Printf("! Unable to remove all Puma-dev CA certs from macOS keychain: %s\n", err)
+		return func() {}
+	} else {
+		fmt.Printf("* Removed all Puma-dev CA certs from macOS keychain.\n")
+
+		return func() {
+			os.RemoveAll(homedir.MustExpand(SupportDir))
+		}
 	}
 }
