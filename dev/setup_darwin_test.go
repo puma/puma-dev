@@ -30,6 +30,9 @@ func TestUninstall_DarwinInteractive(t *testing.T) {
 	if m := flag.Lookup("test.run").Value.String(); m == "" || !regexp.MustCompile(m).MatchString(t.Name()) {
 		t.Skip("interactive test must be specified with -test.run=DarwinInteractive")
 	}
+	expandedHomeDir := homedir.MustExpand(SupportDir)
+
+	assert.DirExists(t, expandedHomeDir)
 
 	launchAgentDir, _, cleanupFunc := installIntoTestContext(t)
 	defer cleanupFunc()
@@ -39,7 +42,7 @@ func TestUninstall_DarwinInteractive(t *testing.T) {
 	Uninstall(launchAgentDir, []string{"test", "localhost"})
 
 	assert.Error(t, exec.Command("launchctl", "list", "io.puma.dev").Run())
-	assert.NoDirExists(t, SupportDir)
+	assert.NoDirExists(t, expandedHomeDir)
 }
 
 func TestInstallIntoSystem_FailsAsSuperuser(t *testing.T) {
