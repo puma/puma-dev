@@ -1,62 +1,69 @@
 package dev
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"os/exec"
-
-	"github.com/puma/puma-dev/homedir"
 )
 
+// SupportDir is the platform-specific path that contains puma-dev's generated certs
 const SupportDir = "~/Library/Application Support/io.puma.dev"
 
-func LoginKeyChain() (string, error) {
-
-	new_keychain_path := homedir.MustExpand("~/Library/Keychains/login.keychain-db")
-	old_keychain_path := homedir.MustExpand("~/Library/Keychains/login.keychain")
-
-	if _, err := os.Stat(new_keychain_path); err == nil {
-		return new_keychain_path, nil
-	}
-
-	if _, err := os.Stat(old_keychain_path); err == nil {
-		return old_keychain_path, nil
-	}
-
-	return "", errors.New("Could not find login keychain")
-}
-
+// TrustCert adds the cert at the provided path to the macOS default login keychain
 func TrustCert(cert string) error {
 	fmt.Printf("* Adding certification to login keychain as trusted\n")
 	fmt.Printf("! There is probably a dialog open that requires you to authenticate\n")
 
-	login, keychainError := LoginKeyChain()
+	login, keychainError := loginKeyChain()
 
 	if keychainError != nil {
 		return keychainError
 	}
 
-	addTrustedCertCommand := exec.Command("sh", "-c",
-		fmt.Sprintf(`security add-trusted-cert -d -r trustRoot -k '%s' '%s'`, login, cert))
+	addTrustedCertCommand := exec.Command("sh", "-c", fmt.Sprintf(`security add-trusted-cert -k '%s' '%s'`, login, cert))
 
-	stderr, readPipeErr := addTrustedCertCommand.StderrPipe()
-	if readPipeErr != nil {
-		return readPipeErr
-	}
+	var stderr bytes.Buffer
+	addTrustedCertCommand.Stderr = &stderr
 
-	if err := addTrustedCertCommand.Start(); err != nil {
-		return err
-	}
-
-	stderrLines, _ := ioutil.ReadAll(stderr)
-
-	if err := addTrustedCertCommand.Wait(); err != nil {
-		return fmt.Errorf("add-trusted-cert had %s. %s", err.Error(), stderrLines)
+	if err := addTrustedCertCommand.Run(); err != nil {
+		return fmt.Errorf("add-trusted-cert had %s. %s", err.Error(), stderr.Bytes())
 	}
 
 	fmt.Printf("* Certificates setup, ready for https operations!\n")
 
 	return nil
+}
+
+func DeleteAllPumaDevCAFromDefaultKeychain() error {
+	deleteAllBashCommand := `
+	for sha in $(security find-certificate -a -c "Puma-dev CA" -Z | awk '/SHA-1/ {print $3}'); do 
+		security delete-certificate -t -Z $sha || security delete-certificate -Z $sha
+	done
+	`
+
+	deleteAllPumaDevTrustsCmd := exec.Command("sh", "-c", deleteAllBashCommand)
+
+	var stdout, stderr bytes.Buffer
+	deleteAllPumaDevTrustsCmd.Stdout = &stdout
+	deleteAllPumaDevTrustsCmd.Stderr = &stderr
+
+	if err := deleteAllPumaDevTrustsCmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loginKeyChain() (string, error) {
+	discoverLoginKeychainCmd := exec.Command("sh", "-c", `security login-keychain | xargs | tr -d '"' | tr -d '\n'`)
+
+	var stdout, stderr bytes.Buffer
+	discoverLoginKeychainCmd.Stdout = &stdout
+	discoverLoginKeychainCmd.Stderr = &stderr
+
+	if err := discoverLoginKeychainCmd.Run(); err != nil {
+		return "", fmt.Errorf("could not find login keychain. security login-keychain had %s, %s", err.Error(), stderr.Bytes())
+	}
+
+	return string(stdout.Bytes()), nil
 }

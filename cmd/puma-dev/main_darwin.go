@@ -36,6 +36,11 @@ var (
 	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
 )
 
+const (
+	LaunchAgentDirPath = "~/Library/LaunchAgents"
+	LogFilePath        = "~/Library/Logs/puma-dev.log"
+)
+
 func main() {
 	flag.Parse()
 
@@ -54,7 +59,13 @@ func main() {
 	}
 
 	if *fUninstall {
-		dev.Uninstall(domains)
+		onlyDeleteNowUntrustedCertAndKeyInProductionPathFunc := dev.Uninstall(LaunchAgentDirPath, domains)
+		// FIXME: As part of running tests interactively on macOS, we can't delete .cert/.key
+		// generated as part of test runs. But, we don't want to leave untrusted .cert/.key's
+		// hanging around post-uninstall. So, we delete them as part of the main codepath but
+		// ignore this returned func during testing. Eventually, when the cert/key can be
+		// stored in the macOS keychain, we can rely on that to avoid this.
+		onlyDeleteNowUntrustedCertAndKeyInProductionPathFunc()
 		return
 	}
 
@@ -62,9 +73,9 @@ func main() {
 		err := dev.InstallIntoSystem(&dev.InstallIntoSystemArgs{
 			ApplinkDirPath:     *fDir,
 			Domains:            *fDomains,
-			LaunchAgentDirPath: "~/Library/LaunchAgents",
+			LaunchAgentDirPath: LaunchAgentDirPath,
 			ListenPort:         *fInstallPort,
-			LogfilePath:        "~/Library/Logs/puma-dev.log",
+			LogfilePath:        LogFilePath,
 			Timeout:            (*fTimeout).String(),
 			TlsPort:            *fInstallTLS,
 		})

@@ -7,5 +7,6 @@
 /coverage.html
 
 .ruby-version
+.tool-versions
 
 .vscode
