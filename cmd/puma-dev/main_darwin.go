@@ -25,6 +25,8 @@ var (
 	fPow      = flag.Bool("pow", false, "Mimic pow's settings")
 	fLaunch   = flag.Bool("launchd", false, "Use socket from launchd")
 
+	fNoServePublicPaths = flag.String("no-serve-public-paths", "", "Disable static file server for specific paths under /public")
+
 	fSetup = flag.Bool("setup", false, "Run system setup")
 	fStop  = flag.Bool("stop", false, "Stop all puma-dev servers")
 
@@ -176,6 +178,7 @@ func main() {
 	http.Pool = &pool
 	http.Debug = *fDebug
 	http.Events = &events
+	http.IgnoredStaticPaths = strings.Split(*fNoServePublicPaths, ":")
 
 	http.Setup()
 
