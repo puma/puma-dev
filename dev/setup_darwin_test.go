@@ -49,6 +49,7 @@ func TestInstallIntoSystem_FailsAsSuperuser(t *testing.T) {
 		TlsPort:            10443,
 		Domains:            "test:localhost",
 		Timeout:            "5s",
+		NoServePublicPaths: "",
 		ApplinkDirPath:     "/tmp/gotest-dummy-applinkdir",
 		LaunchAgentDirPath: "/tmp/gotest-dummy-launchagent",
 		LogfilePath:        "/tmp/gotest-dummy-logs/dummy.log",
@@ -80,6 +81,7 @@ func installIntoTestContext(t *testing.T) (string, string, func()) {
 		TlsPort:            10443,
 		Domains:            "test:localhost",
 		Timeout:            "5s",
+		NoServePublicPaths: ""
 		ApplinkDirPath:     appLinkDir,
 		LaunchAgentDirPath: launchAgentDir,
 		LogfilePath:        logFilePath,

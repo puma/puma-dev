@@ -80,6 +80,7 @@ func main() {
 			LogfilePath:        LogFilePath,
 			Timeout:            (*fTimeout).String(),
 			TlsPort:            *fInstallTLS,
+			NoServePublicPaths: *fNoServePublicPaths,
 		})
 
 		if err != nil {
