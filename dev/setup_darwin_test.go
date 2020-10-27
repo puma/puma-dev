@@ -81,7 +81,7 @@ func installIntoTestContext(t *testing.T) (string, string, func()) {
 		TlsPort:            10443,
 		Domains:            "test:localhost",
 		Timeout:            "5s",
-		NoServePublicPaths: ""
+		NoServePublicPaths: "",
 		ApplinkDirPath:     appLinkDir,
 		LaunchAgentDirPath: launchAgentDir,
 		LogfilePath:        logFilePath,
