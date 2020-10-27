@@ -192,6 +192,9 @@ func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool
 
 	for _, ignoredPath := range h.IgnoredStaticPaths {
 		if strings.HasPrefix(reqPath, ignoredPath) {
+			if h.Debug {
+				fmt.Fprintf(os.Stdout, "Not serving '%s' as it matches a path in no-serve-public-paths\n", reqPath)
+			}
 			return false
 		}
 	}
