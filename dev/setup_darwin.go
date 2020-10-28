@@ -103,6 +103,7 @@ type InstallIntoSystemArgs struct {
 	LaunchAgentDirPath string
 	Domains            string
 	Timeout            string
+	NoServePublicPaths string
 }
 
 func InstallIntoSystem(config *InstallIntoSystemArgs) error {
@@ -137,6 +138,8 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
      <string>-d</string>
      <string>%s</string>
      <string>-timeout</string>
+     <string>%s</string>
+     <string>-no-serve-public-paths</string>
      <string>%s</string>
    </array>
    <key>KeepAlive</key>
@@ -181,7 +184,7 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.ListenPort, config.TlsPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.NoServePublicPaths, config.ListenPort, config.TlsPort, logPath, logPath)),
 		0644,
 	)
 

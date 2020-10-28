@@ -100,7 +100,10 @@ func main() {
 	http.Pool = &pool
 	http.Debug = *fDebug
 	http.Events = &events
-	http.IgnoredStaticPaths = strings.Split(*fNoServePublicPaths, ":")
+	if len(*fNoServePublicPaths) > 0 {
+		http.IgnoredStaticPaths = strings.Split(*fNoServePublicPaths, ":")
+		fmt.Printf("* Ignoring files under: public{%s}\n", strings.Join(http.IgnoredStaticPaths, ", "))
+	}
 
 	http.Setup()
 
