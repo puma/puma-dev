@@ -25,6 +25,14 @@ release:
 test:
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
+clean-test:
+	rm -rf ~/.gotest-macos-puma-dev
+
+test-macos-filesystem-setup:
+	sudo mkdir -p /etc/resolver;
+	sudo chmod 0775 /etc/resolver;
+	sudo chown :staff /etc/resolver;
+
 coverage: test
 	go tool cover -html=coverage.out -o coverage.html
 
@@ -50,4 +58,4 @@ test-macos-manual-setup-install: clean build
 	test -f "$$HOME/Library/Logs/puma-dev.log"
 	test 'Hi Puma!' == "$$(curl -s https://rack-hi-puma.puma)" && echo "PASS"
 
-.PHONY: all release
+.PHONY: release

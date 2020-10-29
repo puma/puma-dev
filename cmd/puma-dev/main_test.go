@@ -296,4 +296,18 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 
 		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
 	})
+
+	t.Run("static-site ignore packs", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/packs/site.js", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("static-site ignore config", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/config.json", *fHTTPPort)
+		statusHost := "static-site"
+
+		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
+	})
 }

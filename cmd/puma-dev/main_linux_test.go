@@ -12,9 +12,10 @@ func TestMainPumaDev_Linux(t *testing.T) {
 	defer linkAllTestApps(t, appLinkDir)()
 
 	configureAndBootPumaDevServer(t, map[string]string{
-		"dir":        appLinkDir,
-		"http-port":  "65080",
-		"https-port": "65443",
+		"dir":                   appLinkDir,
+		"http-port":             "65080",
+		"https-port":            "65443",
+		"no-serve-public-paths": "/packs:/config",
 	})
 
 	runPlatformAgnosticTestScenarios(t)

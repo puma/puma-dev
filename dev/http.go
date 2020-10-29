@@ -18,11 +18,12 @@ import (
 )
 
 type HTTPServer struct {
-	Address    string
-	TLSAddress string
-	Pool       *AppPool
-	Debug      bool
-	Events     *Events
+	Address            string
+	TLSAddress         string
+	Pool               *AppPool
+	Debug              bool
+	Events             *Events
+	IgnoredStaticPaths []string
 
 	mux       *pat.PatternServeMux
 	transport *httpu.Transport
@@ -147,7 +148,7 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	if app.Public && req.URL.Path != "/" {
+	if h.shouldServePublicPathForApp(app, req) {
 		safeURLPath := path.Clean(req.URL.Path)
 		path := filepath.Join(app.dir, "public", safeURLPath)
 
@@ -176,6 +177,29 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else {
 		h.proxy.ServeHTTP(w, req)
 	}
+}
+
+func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool {
+	reqPath := path.Clean(req.URL.Path)
+
+	if !a.Public {
+		return false
+	}
+
+	if reqPath == "/" {
+		return false
+	}
+
+	for _, ignoredPath := range h.IgnoredStaticPaths {
+		if strings.HasPrefix(reqPath, ignoredPath) {
+			if h.Debug {
+				fmt.Fprintf(os.Stdout, "Not serving '%s' as it matches a path in no-serve-public-paths\n", reqPath)
+			}
+			return false
+		}
+	}
+
+	return true
 }
 
 func (h *HTTPServer) status(w http.ResponseWriter, req *http.Request) {

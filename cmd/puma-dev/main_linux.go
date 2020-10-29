@@ -15,14 +15,15 @@ import (
 )
 
 var (
-	fDebug    = flag.Bool("debug", false, "enable debug output")
-	fDomains  = flag.String("d", "test", "domains to handle, separate with :, defaults to test")
-	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
-	fTLSPort  = flag.Int("https-port", 9283, "port to listen on https for")
-	fSysBind  = flag.Bool("sysbind", false, "bind to ports 80 and 443")
-	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
-	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
-	fStop     = flag.Bool("stop", false, "Stop all puma-dev servers")
+	fDebug              = flag.Bool("debug", false, "enable debug output")
+	fDir                = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
+	fDomains            = flag.String("d", "test", "domains to handle, separate with :, defaults to test")
+	fHTTPPort           = flag.Int("http-port", 9280, "port to listen on http for")
+	fNoServePublicPaths = flag.String("no-serve-public-paths", "", "Disable static file server for specific paths under /public")
+	fStop               = flag.Bool("stop", false, "Stop all puma-dev servers")
+	fSysBind            = flag.Bool("sysbind", false, "bind to ports 80 and 443")
+	fTimeout            = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
+	fTLSPort            = flag.Int("https-port", 9283, "port to listen on https for")
 )
 
 func main() {
@@ -99,6 +100,10 @@ func main() {
 	http.Pool = &pool
 	http.Debug = *fDebug
 	http.Events = &events
+	if len(*fNoServePublicPaths) > 0 {
+		http.IgnoredStaticPaths = strings.Split(*fNoServePublicPaths, ":")
+		fmt.Printf("* Ignoring files under: public{%s}\n", strings.Join(http.IgnoredStaticPaths, ", "))
+	}
 
 	http.Setup()
 

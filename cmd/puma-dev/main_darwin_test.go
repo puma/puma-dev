@@ -24,11 +24,12 @@ func TestMainPumaDev_Darwin(t *testing.T) {
 	defer linkAllTestApps(t, appLinkDir)()
 
 	serveErr := configureAndBootPumaDevServer(t, map[string]string{
-		"d":          "test:puma",
-		"dir":        appLinkDir,
-		"dns-port":   "65053",
-		"http-port":  "65080",
-		"https-port": "65443",
+		"d":                     "test:puma",
+		"dir":                   appLinkDir,
+		"dns-port":              "65053",
+		"http-port":             "65080",
+		"https-port":            "65443",
+		"no-serve-public-paths": "/packs:/config.json",
 	})
 
 	assert.NoError(t, serveErr)
