@@ -186,10 +186,6 @@ func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool
 		return false
 	}
 
-	if reqPath == "/" {
-		return false
-	}
-
 	for _, ignoredPath := range h.IgnoredStaticPaths {
 		if strings.HasPrefix(reqPath, ignoredPath) {
 			if h.Debug {

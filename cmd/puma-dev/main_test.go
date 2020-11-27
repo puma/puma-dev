@@ -262,6 +262,13 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 		assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
 	})
 
+  t.Run("static-site public/ serves index.html", func(t *testing.T) {
+    reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+    statusHost := "static-site"
+
+    assert.Equal(t, "<html><h1>public/index.html</h1></html>", getURLWithHost(t, reqURL, statusHost))
+  })
+
 	t.Run("static-site public/subfolder/index.html", func(t *testing.T) {
 		reqURL := fmt.Sprintf("http://localhost:%d/subfolder/index.html", *fHTTPPort)
 		statusHost := "static-site"
