@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -237,8 +238,12 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 			panic(err)
 		}
 
-		assert.NoError(t, pollForEvent(t, "rack-hi-puma", "killing_app", "restart.txt touched"))
-		assert.NoError(t, pollForEvent(t, "rack-hi-puma", "shutdown", ""))
+		appRoot := filepath.Join(ProjectRoot, "etc", "rack-hi-puma")
+		h := sha1.New()
+		h.Write([]byte(appRoot))
+		appName := fmt.Sprintf("rack-hi-puma-%.4x", h.Sum(nil))
+		assert.NoError(t, pollForEvent(t, appName, "killing_app", "restart.txt touched"))
+		assert.NoError(t, pollForEvent(t, appName, "shutdown", ""))
 	})
 
 	t.Run("unknown app", func(t *testing.T) {
