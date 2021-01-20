@@ -241,7 +241,9 @@ if test -e ~/.powconfig; then
 fi
 
 if test -e .env; then
+	original_env=$(printenv)
 	source .env
+	eval $original_env # restore any previously existing ENV vars overwritten by .env
 fi
 
 if test -e .powrc; then
