@@ -25,7 +25,7 @@ First, ensure that the [`puma`](https://github.com/puma/puma) gem is installed. 
 gem 'puma'
 ```
 
-### Homebrew on macOS
+### Homebrew on macOS or GNU/Linux
 `brew install puma/puma/puma-dev`
 
 ### Pre-built Binaries
