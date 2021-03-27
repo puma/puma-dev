@@ -5,6 +5,7 @@
 /tmp
 /coverage*.out
 /coverage.html
+/*.log
 
 .ruby-version
 .tool-versions
