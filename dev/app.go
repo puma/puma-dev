@@ -236,23 +236,23 @@ func (a *App) Log() string {
 const executionShell = `exec bash -c '
 cd %s
 
-if test -e ~/.powconfig; then
+if test -e ~/.powconfig && [ "$PUMADEV_SOURCE_POWCONFIG" != "0" ]; then
 	source ~/.powconfig
 fi
 
-if test -e .env; then
+if test -e .env && [ "$PUMADEV_SOURCE_ENV" != "0" ]; then
 	source .env
 fi
 
-if test -e .powrc; then
+if test -e .powrc && [ "$PUMADEV_SOURCE_POWRC" != "0" ]; then
 	source .powrc
 fi
 
-if test -e .powenv; then
+if test -e .powenv && [ "$PUMADEV_SOURCE_POWENV" != "0" ]; then
 	source .powenv
 fi
 
-if test -e .pumaenv; then
+if test -e .pumaenv && [ "$PUMADEV_SOURCE_PUMAENV" != "0" ]; then
 	source .pumaenv
 fi
 
