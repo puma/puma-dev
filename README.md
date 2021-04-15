@@ -183,7 +183,15 @@ Puma-dev supports loading environment variables before puma starts. It checks fo
 * `.powenv`
 * `.pumaenv`
 
-Additionally, puma-dev uses a few environment variables to control how puma is started that you can overwrite in your loaded shell config.
+You can prevent puma-dev from loading any of these environment files by setting a corresponding environment variable to '0':
+
+* `PUMADEV_SOURCE_POWCONFIG=0`
+* `PUMADEV_SOURCE_ENV=0`
+* `PUMADEV_SOURCE_POWRC=0`
+* `PUMADEV_SOURCE_POWENV=0`
+* `PUMADEV_SOURCE_PUMAENV=0`
+
+Additionally, puma-dev uses a few other environment variables to control how puma is started that you can overwrite in your loaded shell config.
 
 * `CONFIG`: A puma configuration file to load, usually something like `config/puma-dev.rb`. Defaults to no config.
 * `THREADS`: How many threads puma should use concurrently. Defaults to 5.
