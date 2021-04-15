@@ -1,7 +1,6 @@
 # Puma-dev: A fast, zero-config development server for macOS and Linux
 
-[![Build Status](https://travis-ci.org/puma/puma-dev.svg?branch=master)](https://travis-ci.org/puma/puma-dev)
-![CI](https://github.com/puma/puma-dev/workflows/CI/badge.svg)
+[![ci](https://github.com/puma/puma-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/puma/puma-dev/actions/workflows/ci.yml)
 
 Puma-dev is the emotional successor to pow. It provides a quick and easy way to manage apps in development on macOS and Linux.
 
