@@ -89,7 +89,7 @@ func (a *App) Kill(reason string) error {
 		"reason", reason,
 	)
 
-	fmt.Printf("! Killing '%s' (%d)\n", a.Name, a.Command.Process.Pid)
+	fmt.Printf("! Killing '%s' (%d) - '%s'\n", a.Name, a.Command.Process.Pid, reason)
 	err := a.Command.Process.Signal(syscall.SIGTERM)
 	if err != nil {
 		a.eventAdd("killing_error",
@@ -97,7 +97,13 @@ func (a *App) Kill(reason string) error {
 			"error", err.Error(),
 		)
 		fmt.Printf("! Error trying to kill %s: %s", a.Name, err)
+	} else {
+		// sigterm successful -- now that this app is stopped, remove it
+		// from pool so it is guaranteed be booted on the next request
+		a.pool.remove(a)
+		a.eventAdd("shutdown")
 	}
+
 	return err
 }
 
