@@ -315,6 +315,10 @@ The status includes:
   * The directory of the app
   * The last 1024 lines the app output
 
+### Events API
+
+Puma-dev emites a number of internal events and exposes them through an events API. These events can be helpful when troubleshooting configuration errors. To access it, send a request with the `Host: puma-dev` and the path `/events`, for example: `curl -H "Host: puma-dev" localhost/events`.
+
 ## Development
 
 To build puma-dev, follow these steps:
