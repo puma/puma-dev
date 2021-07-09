@@ -97,3 +97,7 @@ func TestCommand_link_reassignExistingApp(t *testing.T) {
 
 	RemoveAppSymlinkOrFail(t, appAlias)
 }
+
+func TestCommand_status(t *testing.T) {
+	assert.Nil(t, status())
+}

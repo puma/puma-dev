@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/puma/puma-dev/homedir"
 	"github.com/vektra/errors"
@@ -15,9 +19,71 @@ func command() error {
 	switch flag.Arg(0) {
 	case "link":
 		return link()
+	case "status":
+		return status()
 	default:
 		return fmt.Errorf("Unknown command: %s\n", flag.Arg(0))
 	}
+}
+
+// App is a running application.
+type App struct {
+	Status  string `json:"status"`
+	Scheme  string `json:"scheme"`
+	Address string `json:"address"`
+}
+
+func status() error {
+	var port string
+
+	if *fHTTPPort != 9280 {
+		port = fmt.Sprintf(":%d", *fHTTPPort)
+	}
+
+	client := &http.Client{}
+	url := fmt.Sprintf("http://localhost%s/status", port)
+	req, err := http.NewRequest("GET", url, nil)
+	req.Host = "puma-dev"
+	w := tabwriter.NewWriter(os.Stdout, 20, 4, 1, ' ', 0)
+
+	if err != nil {
+		return err
+	}
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		fmt.Printf("Unable to lookup puma-dev status. Is puma-dev listening on port %d?\n", *fHTTPPort)
+		return nil
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return err
+	}
+
+	var apps map[string]*App
+	err = json.Unmarshal(body, &apps)
+
+	if err != nil {
+		return err
+	}
+
+	if len(apps) > 0 {
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", "NAME", "STATUS", "ADDRESS", "SCHEME")
+
+		for name, app := range apps {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, app.Status, app.Address, app.Scheme)
+		}
+
+		w.Flush()
+	} else {
+		fmt.Println("No apps are currently running.")
+	}
+
+	return nil
 }
 
 func link() error {
