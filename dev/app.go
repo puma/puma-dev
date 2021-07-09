@@ -521,10 +521,11 @@ func (a *AppPool) App(name string) (*App, error) {
 	destStat, err := os.Stat(destPath)
 	if err == nil {
 		destName := destStat.Name()
+		h := sha1.New()
+		h.Write([]byte(destPath))
+		canonicalName = fmt.Sprintf("%s-%.4x", destStat.Name(), h.Sum(nil))
+
 		if destName != name {
-			h := sha1.New()
-			h.Write([]byte(destPath))
-			canonicalName = fmt.Sprintf("%s-%.4x", destStat.Name(), h.Sum(nil))
 			aliasName = name
 		}
 	}
