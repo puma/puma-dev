@@ -17,11 +17,13 @@ release:
 	SDKROOT=$$(xcrun --sdk macosx --show-sdk-path) gox -cgo -os="darwin" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
 	gox -os="linux" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
 
-	for arch in amd64 arm64; do \
+	# linux
+	for arch in amd64; do \
 		mv -v "puma-dev_linux_$$arch" puma-dev; \
 		tar czvf "pkg/puma-dev-$$RELEASE-linux-$$arch.tar.gz" puma-dev; \
 	done
 
+	# macOS
 	for arch in amd64 arm64; do \
 		mv -v "puma-dev_darwin_$$arch" puma-dev; \
 		zip -v "pkg/puma-dev-$$RELEASE-darwin-$$arch.zip" puma-dev; \
