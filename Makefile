@@ -14,13 +14,20 @@ release:
 	rm -rf ./pkg
 	mkdir -p ./pkg
 
-	gox -os="darwin linux" -arch="amd64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
+	SDKROOT=$$(xcrun --sdk macosx --show-sdk-path) gox -cgo -os="darwin" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
+	gox -os="linux" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
 
-	mv puma-dev_linux_amd64 puma-dev
-	tar czvf pkg/puma-dev-$$RELEASE-linux-amd64.tar.gz puma-dev
+	# linux
+	for arch in amd64; do \
+		mv -v "puma-dev_linux_$$arch" puma-dev; \
+		tar czvf "pkg/puma-dev-$$RELEASE-linux-$$arch.tar.gz" puma-dev; \
+	done
 
-	mv puma-dev_darwin_amd64 puma-dev
-	zip pkg/puma-dev-$$RELEASE-darwin-amd64.zip puma-dev
+	# macOS
+	for arch in amd64 arm64; do \
+		mv -v "puma-dev_darwin_$$arch" puma-dev; \
+		zip -v "pkg/puma-dev-$$RELEASE-darwin-$$arch.zip" puma-dev; \
+	done
 
 test:
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...

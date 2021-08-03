@@ -1,13 +1,14 @@
 /bin/
 /pkg/
 /vendor/pkg/
-/puma-dev
 /tmp
 /coverage*.out
 /coverage.html
 /*.log
 
+/puma-dev
+/puma-dev_*_amd64
+/puma-dev_*_arm64
+
 .ruby-version
 .tool-versions
-
-.vscode
