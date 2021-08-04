@@ -15,7 +15,7 @@ release:
 	mkdir -p ./pkg
 
 	SDKROOT=$$(xcrun --sdk macosx --show-sdk-path) gox -cgo -os="darwin" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
-	gox -os="linux" -arch="amd64 arm64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
+	gox -os="linux" -arch="amd64" -ldflags "-X main.Version=$$RELEASE" ./cmd/puma-dev
 
 	# linux
 	for arch in amd64; do \
