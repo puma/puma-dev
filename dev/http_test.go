@@ -49,3 +49,17 @@ func TestHttp_removeTLD_nipIoDots(t *testing.T) {
 
 	assert.Equal(t, "effective-invention", str)
 }
+
+func TestHttp_removeTLD_multipartTLD(t *testing.T) {
+	testHttp.Domains = []string{"co.test"}
+	str := testHttp.removeTLD("confusing-riddle.co.test")
+
+	assert.Equal(t, "confusing-riddle", str)
+}
+
+func TestHttp_removeTLD_multipartTLDSimilarToShorterOne(t *testing.T) {
+	testHttp.Domains = []string{"test", "co.test"}
+	str := testHttp.removeTLD("confusing-riddle.co.test")
+
+	assert.Equal(t, "confusing-riddle", str)
+}

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ type HTTPServer struct {
 	Debug              bool
 	Events             *Events
 	IgnoredStaticPaths []string
+	Domains            []string
 
 	mux       *pat.PatternServeMux
 	transport *httpu.Transport
@@ -106,6 +108,14 @@ func (h *HTTPServer) findApp(name string) (*App, error) {
 	return app, nil
 }
 
+type ByDecreasingTLDComplexity []string
+
+func (a ByDecreasingTLDComplexity) Len() int      { return len(a) }
+func (a ByDecreasingTLDComplexity) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByDecreasingTLDComplexity) Less(i, j int) bool {
+	return strings.Count(a[i], ".") > strings.Count(a[j], ".")
+}
+
 func (h *HTTPServer) removeTLD(host string) string {
 	colon := strings.LastIndexByte(host, ':')
 	if colon != -1 {
@@ -123,6 +133,15 @@ func (h *HTTPServer) removeTLD(host string) string {
 		name := strings.Join(parts[:len(parts)-6], ".")
 
 		return name
+	}
+
+	if !sort.IsSorted(ByDecreasingTLDComplexity(h.Domains)) {
+		sort.Sort(ByDecreasingTLDComplexity(h.Domains))
+	}
+	for _, tld := range h.Domains {
+		if strings.HasSuffix(host, "."+tld) {
+			return strings.TrimSuffix(host, "."+tld)
+		}
 	}
 
 	dot := strings.LastIndexByte(host, '.')
