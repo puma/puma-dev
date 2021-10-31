@@ -309,7 +309,9 @@ Puma-dev supports `xip.io` and `nip.io` domains. It will detect them and strip t
 
 ### Run multiple domains
 
-Puma-dev allows you to run multiple local domains. Handy if you're working with more than one client. Simply set up puma-dev like so: `puma-dev -install -d first-domain:second-domain`
+Puma-dev allows you to run multiple local domains. Handy if you're working with more than one client. Simply set up puma-dev like so: `puma-dev -install -d first-domain:second-domain`.
+
+Puma-dev supports domains, not just TLDs. `puma-dev -install -d test:puma.dev` will allow `myapp.test` and `myapp.puma.dev` to resolve correctly. But, of course, this would render the project webpage at [https://puma.dev](https://puma.dev) inaccessible.
 
 ### Static file support
 
