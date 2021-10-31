@@ -138,6 +138,7 @@ func (h *HTTPServer) removeTLD(host string) string {
 	if !sort.IsSorted(ByDecreasingTLDComplexity(h.Domains)) {
 		sort.Sort(ByDecreasingTLDComplexity(h.Domains))
 	}
+
 	for _, tld := range h.Domains {
 		if strings.HasSuffix(host, "."+tld) {
 			return strings.TrimSuffix(host, "."+tld)
