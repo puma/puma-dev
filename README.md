@@ -6,17 +6,19 @@ Puma-dev is the emotional successor to pow. It provides a quick and easy way to 
 
 ## Highlights
 
-* Easy startup and idle shutdown of rack/rails apps
-* Easy access to the apps using the `.test` subdomain **(configurable)**
-* Run multiple custom domains at the same time, e.g. `.test`, `.puma`.
+- Easy startup and idle shutdown of rack/rails apps
+- Easy access to the apps using the `.test` subdomain **(configurable)**
+- Run multiple custom domains at the same time, e.g. `.test`, `.puma`.
 
 ### Why choose puma-dev?
-* __https__ - it Just Works!
-* Supports __Rails 5 actioncable__ via rack.hijack websockets
-* Supports macOS __and__ Linux
-* The venerable `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
+
+- **https** - it Just Works!
+- Supports **Rails 5 actioncable** via rack.hijack websockets
+- Supports macOS **and** Linux
+- The venerable `pow` [is no longer maintained](https://github.com/basecamp/pow/commit/310f260d08159cf86a52df7ddb5a3bd53a94614f)
 
 ## Installation
+
 First, ensure that the [`puma`](https://github.com/puma/puma) gem is installed. It probably belongs in the Gemfile of the application(s) you're trying to serve via puma-dev.
 
 ```ruby
@@ -25,6 +27,7 @@ gem 'puma'
 ```
 
 ### Homebrew on macOS or GNU/Linux
+
 `brew install puma/puma/puma-dev`
 
 ### Pre-built Binaries
@@ -45,7 +48,7 @@ make && make install
 $GOBIN/puma-dev -V
 ```
 
-------
+---
 
 ## macOS Support
 
@@ -60,15 +63,15 @@ puma-dev -install
 
 If you wish to have `puma-dev` use a port other than 80, pass it via the `-install-port`, for example to use port 81: `puma-dev -install -install-port 81`.
 
-*NOTE:* If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working).
+_NOTE:_ If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working).
 
-*NOTE:* If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
+_NOTE:_ If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
 
 ### Uninstall
 
 Run: `puma-dev -uninstall`
 
-*NOTE:* If you passed custom options (e.g. `-d test:localhost`) to `-setup`, be sure to pass them to `-uninstall` as well. Otherwise `/etc/resolver/*` might contain orphaned entries.
+_NOTE:_ If you passed custom options (e.g. `-d test:localhost`) to `-setup`, be sure to pass them to `-uninstall` as well. Otherwise `/etc/resolver/*` might contain orphaned entries.
 
 ### Logging
 
@@ -76,7 +79,7 @@ When puma-dev is installed as a user agent (the default mode), it will log outpu
 
 In the future, puma-dev will provide an integrated console for this log output.
 
-------
+---
 
 ## Linux Support
 
@@ -122,14 +125,16 @@ Linux prevents applications from binding to ports lower that 1024 by default. Yo
 There are 2 options to allow puma-dev to listen on port 80 and 443:
 
 1. Give puma-dev the capabilities directly:
-  ```shell
-  sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev
-  ```
-or
-2. Install `authbind`. and invoke puma-dev with it when you want to use it e.g.
-  ```shell
-  authbind puma-dev -http-port 80 -https-port 443
-  ```
+
+```shell
+sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev
+```
+
+or 2. Install `authbind`. and invoke puma-dev with it when you want to use it e.g.
+
+```shell
+authbind puma-dev -http-port 80 -https-port 443
+```
 
 There is a shortcut for binding to 80/443 by passing `-sysbind` to puma-dev when starting, which overrides `-http-port` and `-https-port`.
 
@@ -138,30 +143,32 @@ There is a shortcut for binding to 80/443 by passing `-sysbind` to puma-dev when
 On Linux, puma-dev will not automatically run in the background (as per the MacOS `-install` script); you'll need to [run it in the foreground](#running-in-the-foreground). You can set up a system daemon to start up puma-dev in the background yourself.
 
 1. Create `/lib/systemd/system/puma-dev.service` and put in the following:
-  ```
-  [Unit]
-  After=network.target
 
-  [Service]
-  User=$USER
-  ExecStart=/path/to/puma-dev -sysbind
-  Restart=on-failure
+```
+[Unit]
+After=network.target
 
-  [Install]
-  WantedBy=multi-user.target
-  ```
+[Service]
+User=$USER
+ExecStart=/path/to/puma-dev -sysbind
+Restart=on-failure
 
-  Replace `path/to/puma-dev` with an absolute path to puma-dev
-  Replace the `$USER` variable with the name of the user you want to run under.
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace `path/to/puma-dev` with an absolute path to puma-dev
+Replace the `$USER` variable with the name of the user you want to run under.
 
 2. Start puma-dev using systemd:
-  ```shell
-  sudo systemctl daemon-reload
-  sudo systemctl enable puma-dev
-  sudo systemctl start puma-dev
-  ```
 
-------
+```shell
+sudo systemctl daemon-reload
+sudo systemctl enable puma-dev
+sudo systemctl start puma-dev
+```
+
+---
 
 ## Usage
 
@@ -170,6 +177,7 @@ Simply symlink your app's directory into `~/.puma-dev`! That's it!
 You can use the built-in helper subcommand: `puma-dev link [-n name] [dir]` to link app directories into your puma-dev directory (`~/.puma-dev` by default).
 
 ### Options
+
 Run: `puma-dev -h`
 
 You have the ability to configure most of the values that you'll use day-to-day.
@@ -178,41 +186,41 @@ You have the ability to configure most of the values that you'll use day-to-day.
 
 Puma-dev supports loading environment variables before puma starts. It checks for the following files in this order:
 
-* `~/.powconfig`
-* `.env`
-* `.powrc`
-* `.powenv`
-* `.pumaenv`
+- `~/.powconfig`
+- `.env`
+- `.powrc`
+- `.powenv`
+- `.pumaenv`
 
 You can prevent puma-dev from loading any of these environment files by setting a corresponding environment variable to '0':
 
-* `PUMADEV_SOURCE_POWCONFIG=0`
-* `PUMADEV_SOURCE_ENV=0`
-* `PUMADEV_SOURCE_POWRC=0`
-* `PUMADEV_SOURCE_POWENV=0`
-* `PUMADEV_SOURCE_PUMAENV=0`
+- `PUMADEV_SOURCE_POWCONFIG=0`
+- `PUMADEV_SOURCE_ENV=0`
+- `PUMADEV_SOURCE_POWRC=0`
+- `PUMADEV_SOURCE_POWENV=0`
+- `PUMADEV_SOURCE_PUMAENV=0`
 
 Additionally, puma-dev uses a few other environment variables to control how puma is started that you can overwrite in your loaded shell config.
 
-* `CONFIG`: A puma configuration file to load, usually something like `config/puma-dev.rb`. Defaults to no config.
-* `THREADS`: How many threads puma should use concurrently. Defaults to 5.
-* `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
+- `CONFIG`: A puma configuration file to load, usually something like `config/puma-dev.rb`. Defaults to no config.
+- `THREADS`: How many threads puma should use concurrently. Defaults to 5.
+- `WORKERS`: How many worker processes to start. Defaults to 0, meaning only use threads.
 
 ### Important Note On Ports and Domain Names
 
-* Default privileged ports are 80 and 443
-* Default domain is `.test`.
-  * Previously it was `.dev`, but it is owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
-  * Don't use `.dev` and `.foo`, as they are real TLDs.
-* Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](http://pow.cx/manual.html#section_1.2).
+- Default privileged ports are 80 and 443
+- Default domain is `.test`.
+  - Previously it was `.dev`, but it is owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
+  - Don't use `.dev` and `.foo`, as they are real TLDs.
+- Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](http://pow.cx/manual.html#section_1.2).
 
 ### Restarting
 
-If you would like to have puma-dev restart *a specific app*, you can run `touch tmp/restart.txt` in that app's directory.
+If you would like to have puma-dev restart _a specific app_, you can run `touch tmp/restart.txt` in that app's directory.
 
 ### Purging
 
-If you would like to have puma-dev stop *all the apps* (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
+If you would like to have puma-dev stop _all the apps_ (for resource issues or because an app isn't restarting properly), you can send `puma-dev` the signal `USR1`. The easiest way to do that is:
 
 `puma-dev -stop`
 
@@ -262,8 +270,9 @@ To fix this leave WDS running in plain HTTP mode and combine Puma-dev's [proxy](
 
 Here's how to configure Rails and the Webpacker gem, for an example app already running at `https://blah.test`:
 
-* Run `echo 3035 > ~/.puma-dev/webpack.blah` to set up the proxy to the WDS
-* Edit `config/environments/development.rb` to include one of the following:
+- Run `echo 3035 > ~/.puma-dev/webpack.blah` to set up the proxy to the WDS
+- Edit `config/environments/development.rb` to include one of the following:
+
 ```
 # for webpacker-only projects
 config.action_controller.asset_host = '//webpack.blah.test'
@@ -271,7 +280,8 @@ config.action_controller.asset_host = '//webpack.blah.test'
 # for hybrid webpacker/sprockets projects
 config.action_controller.asset_host = proc { |source| '//webpack.blah.test' if source.starts_with?('/packs') }
 ```
-* Edit `config/webpacker.yml` to match:
+
+- Edit `config/webpacker.yml` to match:
 
 ```
 dev_server:
@@ -280,6 +290,7 @@ dev_server:
   port: 3035
   public: webpack.blah.test
 ```
+
 You can now restart the app with `puma-dev -stop` and start WDS with `bin/webpack-dev-server`.
 
 ### Websockets
@@ -288,7 +299,7 @@ Puma-dev supports websockets natively but you may need to tell your web framewor
 
 In the case of rails, you need to configure rails to allow all websockets or websocket requests from certain domains. The quickest way is to add `config.action_cable.disable_request_forgery_protection = true` to `config/environments/development.rb`. This will allow all websocket connections while in development.
 
-*Do not use disable_request_forgery_protection in production!*
+_Do not use disable_request_forgery_protection in production!_
 
 Or you can add something like `config.action_cable.allowed_request_origins = /(\.test$)|^localhost$/` to allow anything under `.test` as well as `localhost`.
 
@@ -313,9 +324,10 @@ Once a virtual host is installed, it's also automatically accessible from all su
 Puma-dev is starting to evolve a status API that can be used to introspect it and the apps. To access it, send a request with the `Host: puma-dev` and the path `/status`, for example: `curl -H "Host: puma-dev" localhost/status`.
 
 The status includes:
-  * If it is booting, running, or dead
-  * The directory of the app
-  * The last 1024 lines the app output
+
+- If it is booting, running, or dead
+- The directory of the app
+- The last 1024 lines the app output
 
 ### Events API
 
@@ -325,10 +337,10 @@ Puma-dev emites a number of internal events and exposes them through an events A
 
 To build puma-dev, follow these steps:
 
-* Install [golang](http://golang.org)
-* Run `go get github.com/puma/puma-dev/...`
-* Run `go get github.com/vektra/errors/...`
-* Run `$GOPATH/bin/puma-dev` to use your new binary
+- Install [golang](http://golang.org)
+- Run `go get github.com/puma/puma-dev/...`
+- Run `go get github.com/vektra/errors/...`
+- Run `$GOPATH/bin/puma-dev` to use your new binary
 
 Puma-dev uses [govendor](https://github.com/kardianos/govendor) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `govendor fetch +vendor <package path>` to pull it into `vendor`. Then you can use it from within `puma-dev/src`
 
