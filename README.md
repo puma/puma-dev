@@ -111,6 +111,8 @@ sudo update-ca-certificates
 
 ### Domains (.test or similar)
 
+On systems with `systemd-resolved` the `.localhost` extension will be available by default. Try `ping some-domain.localhost` to see if it works.
+
 In order for requests to the `.test` (or any other custom) domain to resolve, install the [dev-tld-resolver](https://github.com/puma/dev-tld-resolver), making sure to use `test` (or the custom TLD you want to use) when configuring TLDs.
 
 ### Port 80/443 binding
