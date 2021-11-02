@@ -168,6 +168,8 @@ sudo systemctl enable puma-dev
 sudo systemctl start puma-dev
 ```
 
+On systems with SELinux you may have to run `restorecon /path/to/puma-dev` in order to run it.
+
 ---
 
 ## Usage
