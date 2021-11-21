@@ -552,6 +552,50 @@ func (a *AppPool) App(name string) (*App, error) {
 	return app, nil
 }
 
+func pruneSub(name string) string {
+	dot := strings.IndexByte(name, '.')
+	if dot == -1 {
+		return ""
+	}
+
+	return name[dot+1:]
+}
+
+func (a *AppPool) FindAppByDomainName(name string) (*App, error) {
+	var (
+		app *App
+		err error
+	)
+
+	for name != "" {
+		app, err = a.App(name)
+		if err != nil {
+			if err == ErrUnknownApp {
+				name = pruneSub(name)
+				continue
+			}
+
+			return nil, err
+		}
+
+		break
+	}
+
+	if app == nil {
+		app, err = a.App("default")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = app.WaitTilReady()
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
 func (a *AppPool) remove(app *App) {
 	a.lock.Lock()
 	defer a.lock.Unlock()

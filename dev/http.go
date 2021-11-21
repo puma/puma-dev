@@ -64,50 +64,6 @@ func (h *HTTPServer) AppClosed(app *App) {
 	h.transport.CloseIdleConnections()
 }
 
-func pruneSub(name string) string {
-	dot := strings.IndexByte(name, '.')
-	if dot == -1 {
-		return ""
-	}
-
-	return name[dot+1:]
-}
-
-func (h *HTTPServer) findApp(name string) (*App, error) {
-	var (
-		app *App
-		err error
-	)
-
-	for name != "" {
-		app, err = h.Pool.App(name)
-		if err != nil {
-			if err == ErrUnknownApp {
-				name = pruneSub(name)
-				continue
-			}
-
-			return nil, err
-		}
-
-		break
-	}
-
-	if app == nil {
-		app, err = h.Pool.App("default")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = app.WaitTilReady()
-	if err != nil {
-		return nil, err
-	}
-
-	return app, nil
-}
-
 type ByDecreasingTLDComplexity []string
 
 func (a ByDecreasingTLDComplexity) Len() int      { return len(a) }
@@ -157,7 +113,7 @@ func (h *HTTPServer) removeTLD(host string) string {
 func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 	name := h.removeTLD(req.Host)
 
-	app, err := h.findApp(name)
+	app, err := h.Pool.FindAppByDomainName(name)
 	if err != nil {
 		if err == ErrUnknownApp {
 			h.Events.Add("unknown_app", "name", name, "host", req.Host)
