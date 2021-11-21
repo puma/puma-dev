@@ -451,7 +451,7 @@ func (a *AppPool) maybeIdle(app *App) bool {
 
 var ErrUnknownApp = errors.New("unknown app")
 
-func (a *AppPool) App(name string) (*App, error) {
+func (a *AppPool) lookupApp(name string) (*App, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -568,7 +568,7 @@ func (a *AppPool) FindAppByDomainName(name string) (*App, error) {
 	)
 
 	for name != "" {
-		app, err = a.App(name)
+		app, err = a.lookupApp(name)
 		if err != nil {
 			if err == ErrUnknownApp {
 				name = pruneSub(name)
@@ -582,7 +582,7 @@ func (a *AppPool) FindAppByDomainName(name string) (*App, error) {
 	}
 
 	if app == nil {
-		app, err = a.App("default")
+		app, err = a.lookupApp("default")
 		if err != nil {
 			return nil, err
 		}
