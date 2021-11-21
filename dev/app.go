@@ -588,11 +588,6 @@ func (a *AppPool) FindAppByDomainName(name string) (*App, error) {
 		}
 	}
 
-	err = app.WaitTilReady()
-	if err != nil {
-		return nil, err
-	}
-
 	return app, nil
 }
 

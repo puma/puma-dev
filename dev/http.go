@@ -124,6 +124,11 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	err = app.WaitTilReady()
+	if err != nil {
+		return err
+	}
+
 	if h.shouldServePublicPathForApp(app, req) {
 		safeURLPath := path.Clean(req.URL.Path)
 		path := filepath.Join(app.dir, "public", safeURLPath)
