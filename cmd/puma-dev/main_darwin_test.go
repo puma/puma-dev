@@ -21,7 +21,7 @@ import (
 func TestMainPumaDev_Darwin(t *testing.T) {
 	appLinkDir := homedir.MustExpand("~/.gotest-macos-puma-dev")
 
-	defer linkAllTestApps(t, appLinkDir)()
+	defer LinkAllTestApps(t, appLinkDir)()
 
 	serveErr := configureAndBootPumaDevServer(t, map[string]string{
 		"d":                     "test:puma",
@@ -100,7 +100,7 @@ func TestCertificateInstallAndTrustHTTPS_DarwinInteractive(t *testing.T) {
 	assert.Regexp(t, "! There is probably a dialog open that requires you to authenticate\\n", certInstallStdOut)
 	assert.Regexp(t, "\\* Certificates setup, ready for https operations!\\n$", certInstallStdOut)
 
-	defer linkAllTestApps(t, appLinkDir)()
+	defer LinkAllTestApps(t, appLinkDir)()
 	serveErr := configureAndBootPumaDevServer(t, map[string]string{
 		"d":          "test:puma",
 		"dir":        appLinkDir,

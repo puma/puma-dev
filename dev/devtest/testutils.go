@@ -200,3 +200,25 @@ func DirExists(dirname string) bool {
 	}
 	return info.IsDir()
 }
+
+func LinkAllTestApps(t *testing.T, workingDirPath string) func() {
+	MakeDirectoryOrFail(t, workingDirPath)
+
+	testAppsToLink := map[string]string{
+		"hipuma":      "rack-hi-puma",
+		"static-site": "static-hi-puma",
+	}
+
+	for appLinkName, etcAppDir := range testAppsToLink {
+		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
+		linkPath := filepath.Join(homedir.MustExpand(workingDirPath), appLinkName)
+
+		if err := os.Symlink(appPath, linkPath); err != nil {
+			assert.FailNow(t, err.Error())
+		}
+	}
+
+	return func() {
+		RemoveDirectoryOrFail(t, workingDirPath)
+	}
+}
