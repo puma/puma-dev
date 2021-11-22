@@ -201,13 +201,8 @@ func DirExists(dirname string) bool {
 	return info.IsDir()
 }
 
-func LinkAllTestApps(t *testing.T, workingDirPath string) func() {
+func LinkTestApps(t *testing.T, workingDirPath string, testAppsToLink map[string]string) func() {
 	MakeDirectoryOrFail(t, workingDirPath)
-
-	testAppsToLink := map[string]string{
-		"hipuma":      "rack-hi-puma",
-		"static-site": "static-hi-puma",
-	}
 
 	for appLinkName, etcAppDir := range testAppsToLink {
 		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
@@ -221,4 +216,13 @@ func LinkAllTestApps(t *testing.T, workingDirPath string) func() {
 	return func() {
 		RemoveDirectoryOrFail(t, workingDirPath)
 	}
+}
+
+func LinkAllTestApps(t *testing.T, workingDirPath string) func() {
+	testAppsToLink := map[string]string{
+		"hipuma":      "rack-hi-puma",
+		"static-site": "static-hi-puma",
+	}
+
+	return LinkTestApps(t, workingDirPath, testAppsToLink)
 }
