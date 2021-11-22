@@ -157,28 +157,6 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	return strings.TrimSpace(string(bodyBytes))
 }
 
-func linkAllTestApps(t *testing.T, workingDirPath string) func() {
-	MakeDirectoryOrFail(t, workingDirPath)
-
-	testAppsToLink := map[string]string{
-		"hipuma":      "rack-hi-puma",
-		"static-site": "static-hi-puma",
-	}
-
-	for appLinkName, etcAppDir := range testAppsToLink {
-		appPath := filepath.Join(ProjectRoot, "etc", etcAppDir)
-		linkPath := filepath.Join(homedir.MustExpand(workingDirPath), appLinkName)
-
-		if err := os.Symlink(appPath, linkPath); err != nil {
-			assert.FailNow(t, err.Error())
-		}
-	}
-
-	return func() {
-		RemoveDirectoryOrFail(t, workingDirPath)
-	}
-}
-
 func pollForEvent(t *testing.T, app string, event string, reason string) error {
 	return retry.Do(
 		func() error {
