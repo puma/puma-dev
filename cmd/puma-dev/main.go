@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 )
 
 var (
@@ -19,6 +20,14 @@ var (
 type CommandResult struct {
 	exitStatusCode int
 	shouldExit     bool
+}
+
+type ByDecreasingTLDComplexity []string
+
+func (a ByDecreasingTLDComplexity) Len() int      { return len(a) }
+func (a ByDecreasingTLDComplexity) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByDecreasingTLDComplexity) Less(i, j int) bool {
+	return strings.Count(a[i], ".") > strings.Count(a[j], ".")
 }
 
 func allCheck() {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -32,6 +33,7 @@ func main() {
 	allCheck()
 
 	domains := strings.Split(*fDomains, ":")
+	sort.Sort(ByDecreasingTLDComplexity(domains))
 
 	if *fStop {
 		err := dev.Stop()

@@ -3,6 +3,7 @@ package dev
 import (
 	"fmt"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +15,10 @@ import (
 var tDNSResponder *DNSResponder
 
 func TestServeDNS(t *testing.T) {
+	if os.Getenv("CI") != "true" {
+		t.Skip("Skipping DNS tests outside CI")
+	}
+
 	errChan := make(chan error, 1)
 	domainList := []string{"test"}
 	dnsAddress := "localhost:10053"

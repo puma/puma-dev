@@ -58,7 +58,7 @@ func TestHttp_removeTLD_multipartTLD(t *testing.T) {
 }
 
 func TestHttp_removeTLD_multipartTLDSimilarToShorterOne(t *testing.T) {
-	testHttp.Domains = []string{"test", "co.test"}
+	testHttp.Domains = []string{"co.test", "test"}
 	str := testHttp.removeTLD("confusing-riddle.co.test")
 
 	assert.Equal(t, "confusing-riddle", str)
