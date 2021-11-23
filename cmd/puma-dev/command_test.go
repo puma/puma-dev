@@ -13,13 +13,13 @@ import (
 func TestCommand_noCommandArg(t *testing.T) {
 	StubCommandLineArgs()
 	err := command()
-	assert.Equal(t, "Unknown command: \n", err.Error())
+	assert.Equal(t, "unknown command: ", err.Error())
 }
 
 func TestCommand_badCommandArg(t *testing.T) {
 	StubCommandLineArgs("doesnotexist")
 	err := command()
-	assert.Equal(t, "Unknown command: doesnotexist\n", err.Error())
+	assert.Equal(t, "unknown command: doesnotexist", err.Error())
 }
 
 func TestCommand_link_noArgs(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCommand_link_invalidDirectory(t *testing.T) {
 
 	err := command()
 
-	assert.Equal(t, "Invalid directory: /this/path/does/not/exist", err.Error())
+	assert.Equal(t, "invalid directory: /this/path/does/not/exist", err.Error())
 }
 
 func TestCommand_link_reassignExistingApp(t *testing.T) {

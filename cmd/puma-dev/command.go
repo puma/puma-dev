@@ -16,7 +16,7 @@ func command() error {
 	case "link":
 		return link()
 	default:
-		return fmt.Errorf("Unknown command: %s\n", flag.Arg(0))
+		return fmt.Errorf("unknown command: %s", flag.Arg(0))
 	}
 }
 
@@ -46,14 +46,14 @@ func link() error {
 		stat, err := os.Stat(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("Invalid directory: %s", dir)
+				return fmt.Errorf("invalid directory: %s", dir)
 			}
 
 			return err
 		}
 
 		if !stat.IsDir() {
-			return fmt.Errorf("Invalid directory: %s", dir)
+			return fmt.Errorf("invalid directory: %s", dir)
 		}
 	}
 
