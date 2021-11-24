@@ -155,9 +155,10 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	if req.Host == "puma-dev" {
 		h.mux.ServeHTTP(w, req)
-	} else {
-		h.proxy.ServeHTTP(w, req)
+		return
 	}
+
+	h.proxy.ServeHTTP(w, req)
 }
 
 func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool {
