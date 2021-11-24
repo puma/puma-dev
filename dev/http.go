@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/bmizerany/pat"
 	"github.com/puma/puma-dev/httpu"
-	"github.com/puma/puma-dev/httputil"
 )
 
 type HTTPServer struct {
@@ -45,10 +45,9 @@ func (h *HTTPServer) Setup() {
 	h.Pool.AppClosed = h.AppClosed
 
 	h.proxy = &httputil.ReverseProxy{
-		Proxy:         func(_ http.ResponseWriter, _ *http.Request) error { return nil },
+		Director:      func(_ *http.Request) {},
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
-		Debug:         h.Debug,
 	}
 
 	h.mux = pat.New()
