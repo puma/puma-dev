@@ -45,7 +45,7 @@ func (h *HTTPServer) Setup() {
 	h.Pool.AppClosed = h.AppClosed
 
 	h.proxy = &httputil.ReverseProxy{
-		Proxy:         h.proxyReq,
+		Proxy:         func(_ http.ResponseWriter, _ *http.Request) error { return nil },
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
 		Debug:         h.Debug,
@@ -110,42 +110,6 @@ func (h *HTTPServer) removeTLD(host string) string {
 	}
 }
 
-func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
-	name := h.removeTLD(req.Host)
-
-	app, err := h.Pool.FindAppByDomainName(name)
-	if err != nil {
-		if err == ErrUnknownApp {
-			h.Events.Add("unknown_app", "name", name, "host", req.Host)
-		} else {
-			h.Events.Add("lookup_error", "error", err.Error())
-		}
-
-		return err
-	}
-
-	err = app.WaitTilReady()
-	if err != nil {
-		return err
-	}
-
-	if h.shouldServePublicPathForApp(app, req) {
-		safeURLPath := path.Clean(req.URL.Path)
-		path := filepath.Join(app.dir, "public", safeURLPath)
-
-		fi, err := os.Stat(path)
-		if err == nil && !fi.IsDir() {
-			if ofile, err := os.Open(path); err == nil {
-				http.ServeContent(w, req, req.URL.Path, fi.ModTime(), io.ReadSeeker(ofile))
-				return httputil.ErrHandled
-			}
-		}
-	}
-
-	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
-	return err
-}
-
 func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if h.Debug {
 		fmt.Fprintf(os.Stderr, "%s: %s '%s' (host=%s)\n",
@@ -158,6 +122,42 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	name := h.removeTLD(req.Host)
+
+	app, err := h.Pool.FindAppByDomainName(name)
+	if err != nil {
+		if err == ErrUnknownApp {
+			h.Events.Add("unknown_app", "name", name, "host", req.Host)
+		} else {
+			h.Events.Add("lookup_error", "error", err.Error())
+		}
+
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	err = app.WaitTilReady()
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	if h.shouldServePublicPathForApp(app, req) {
+		safeURLPath := path.Clean(req.URL.Path)
+		path := filepath.Join(app.dir, "public", safeURLPath)
+
+		fi, err := os.Stat(path)
+		if err == nil && !fi.IsDir() {
+			if ofile, err := os.Open(path); err == nil {
+				http.ServeContent(w, req, req.URL.Path, fi.ModTime(), io.ReadSeeker(ofile))
+				return
+			}
+		}
+	}
+
+	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
 	h.proxy.ServeHTTP(w, req)
 }
 
