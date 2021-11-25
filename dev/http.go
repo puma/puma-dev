@@ -26,13 +26,15 @@ type HTTPServer struct {
 	IgnoredStaticPaths []string
 	Domains            []string
 
-	mux       *pat.PatternServeMux
-	transport *httpu.Transport
-	proxy     *httputil.ReverseProxy
+	mux           *pat.PatternServeMux
+	unixTransport *httpu.Transport
+	unixProxy     *httputil.ReverseProxy
+	tcpTransport  *httpu.Transport
+	tcpProxy      *httputil.ReverseProxy
 }
 
 func (h *HTTPServer) Setup() {
-	h.transport = &httpu.Transport{
+	h.unixTransport = &httpu.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 10 * time.Second,
@@ -41,13 +43,28 @@ func (h *HTTPServer) Setup() {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	h.Pool.AppClosed = h.AppClosed
-
-	h.proxy = &httputil.ReverseProxy{
+	h.unixProxy = &httputil.ReverseProxy{
 		Director:      func(_ *http.Request) {},
-		Transport:     h.transport,
+		Transport:     h.unixTransport,
 		FlushInterval: 1 * time.Second,
 	}
+
+	h.tcpTransport = &httpu.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   5 * time.Second,
+			KeepAlive: 10 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	h.tcpProxy = &httputil.ReverseProxy{
+		Director:      func(_ *http.Request) {},
+		Transport:     h.tcpTransport,
+		FlushInterval: 1 * time.Second,
+	}
+
+	h.Pool.AppClosed = h.AppClosed
 
 	h.mux = pat.New()
 
@@ -59,7 +76,8 @@ func (h *HTTPServer) AppClosed(app *App) {
 	// Whenever an app is closed, wipe out all idle conns. This
 	// obviously closes down more than just this one apps connections
 	// but that's ok.
-	h.transport.CloseIdleConnections()
+	h.unixTransport.CloseIdleConnections()
+	h.tcpTransport.CloseIdleConnections()
 }
 
 func (h *HTTPServer) removeTLD(host string) string {
@@ -151,7 +169,11 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
-	h.proxy.ServeHTTP(w, req)
+	if app.Scheme == "httpu" {
+		h.unixProxy.ServeHTTP(w, req)
+	} else {
+		h.tcpProxy.ServeHTTP(w, req)
+	}
 }
 
 func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool {
