@@ -58,10 +58,10 @@ func (h *HTTPServer) Setup() {
 	}
 
 	h.tcpTransport = &http.Transport{
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 10 * time.Second,
-		}).Dial,
+		}).DialContext,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
