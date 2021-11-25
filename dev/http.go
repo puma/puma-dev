@@ -33,6 +33,12 @@ type HTTPServer struct {
 	tcpProxy      *httputil.ReverseProxy
 }
 
+const dialerTimeout = 5 * time.Second
+const keepAlive = 10 * time.Second
+const tlsHandshakeTimeout = 10 * time.Second
+const expectContinueTimeout = 1 * time.Second
+const proxyFlushInternal = 1 * time.Second
+
 func (h *HTTPServer) Setup() {
 	h.unixTransport = &http.Transport{
 		DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
@@ -42,34 +48,34 @@ func (h *HTTPServer) Setup() {
 			}
 
 			dialer := net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 10 * time.Second,
+				Timeout:   dialerTimeout,
+				KeepAlive: keepAlive,
 			}
 			return dialer.DialContext(ctx, "unix", socketPath)
 		},
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
 	}
 
 	h.unixProxy = &httputil.ReverseProxy{
 		Director:      func(_ *http.Request) {},
 		Transport:     h.unixTransport,
-		FlushInterval: 1 * time.Second,
+		FlushInterval: proxyFlushInternal,
 	}
 
 	h.tcpTransport = &http.Transport{
 		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 10 * time.Second,
+			Timeout:   dialerTimeout,
+			KeepAlive: keepAlive,
 		}).DialContext,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
 	}
 
 	h.tcpProxy = &httputil.ReverseProxy{
 		Director:      func(_ *http.Request) {},
 		Transport:     h.tcpTransport,
-		FlushInterval: 1 * time.Second,
+		FlushInterval: proxyFlushInternal,
 	}
 
 	h.Pool.AppClosed = h.AppClosed
