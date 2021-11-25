@@ -1,6 +1,7 @@
 package dev
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	"github.com/bmizerany/pat"
-	"github.com/puma/puma-dev/httpu"
 )
 
 type HTTPServer struct {
@@ -27,18 +27,26 @@ type HTTPServer struct {
 	Domains            []string
 
 	mux           *pat.PatternServeMux
-	unixTransport *httpu.Transport
+	unixTransport *http.Transport
 	unixProxy     *httputil.ReverseProxy
 	tcpTransport  *http.Transport
 	tcpProxy      *httputil.ReverseProxy
 }
 
 func (h *HTTPServer) Setup() {
-	h.unixTransport = &httpu.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 10 * time.Second,
-		}).Dial,
+	h.unixTransport = &http.Transport{
+		DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
+			socketPath, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+
+			dialer := net.Dialer{
+				Timeout:   5 * time.Second,
+				KeepAlive: 10 * time.Second,
+			}
+			return dialer.DialContext(ctx, "unix", socketPath)
+		},
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
@@ -170,8 +178,10 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
 	if app.Scheme == "httpu" {
+		req.URL.Scheme, req.URL.Host = "http", app.Address()
 		h.unixProxy.ServeHTTP(w, req)
 	} else {
+		req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
 		h.tcpProxy.ServeHTTP(w, req)
 	}
 }
