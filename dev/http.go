@@ -29,7 +29,7 @@ type HTTPServer struct {
 	mux           *pat.PatternServeMux
 	unixTransport *httpu.Transport
 	unixProxy     *httputil.ReverseProxy
-	tcpTransport  *httpu.Transport
+	tcpTransport  *http.Transport
 	tcpProxy      *httputil.ReverseProxy
 }
 
@@ -49,7 +49,7 @@ func (h *HTTPServer) Setup() {
 		FlushInterval: 1 * time.Second,
 	}
 
-	h.tcpTransport = &httpu.Transport{
+	h.tcpTransport = &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 10 * time.Second,
