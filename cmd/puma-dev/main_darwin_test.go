@@ -19,7 +19,7 @@ import (
 )
 
 func TestMainPumaDev_Darwin(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-macos-puma-dev")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_macos-puma-dev")
 
 	defer LinkAllTestApps(t, appLinkDir)()
 
