@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/bmizerany/pat"
 	"github.com/puma/puma-dev/httpu"
-	"github.com/puma/puma-dev/httputil"
 )
 
 type HTTPServer struct {
@@ -45,10 +45,9 @@ func (h *HTTPServer) Setup() {
 	h.Pool.AppClosed = h.AppClosed
 
 	h.proxy = &httputil.ReverseProxy{
-		Proxy:         h.proxyReq,
+		Director:      func(_ *http.Request) {},
 		Transport:     h.transport,
 		FlushInterval: 1 * time.Second,
-		Debug:         h.Debug,
 	}
 
 	h.mux = pat.New()
@@ -110,7 +109,18 @@ func (h *HTTPServer) removeTLD(host string) string {
 	}
 }
 
-func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
+func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if h.Debug {
+		fmt.Fprintf(os.Stderr, "%s: %s '%s' (host=%s)\n",
+			time.Now().Format(time.RFC3339Nano),
+			req.Method, req.URL.Path, req.Host)
+	}
+
+	if req.Host == "puma-dev" {
+		h.mux.ServeHTTP(w, req)
+		return
+	}
+
 	name := h.removeTLD(req.Host)
 
 	app, err := h.Pool.FindAppByDomainName(name)
@@ -121,12 +131,16 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 			h.Events.Add("lookup_error", "error", err.Error())
 		}
 
-		return err
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
 	err = app.WaitTilReady()
 	if err != nil {
-		return err
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
 	if h.shouldServePublicPathForApp(app, req) {
@@ -137,27 +151,13 @@ func (h *HTTPServer) proxyReq(w http.ResponseWriter, req *http.Request) error {
 		if err == nil && !fi.IsDir() {
 			if ofile, err := os.Open(path); err == nil {
 				http.ServeContent(w, req, req.URL.Path, fi.ModTime(), io.ReadSeeker(ofile))
-				return httputil.ErrHandled
+				return
 			}
 		}
 	}
 
 	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
-	return err
-}
-
-func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if h.Debug {
-		fmt.Fprintf(os.Stderr, "%s: %s '%s' (host=%s)\n",
-			time.Now().Format(time.RFC3339Nano),
-			req.Method, req.URL.Path, req.Host)
-	}
-
-	if req.Host == "puma-dev" {
-		h.mux.ServeHTTP(w, req)
-	} else {
-		h.proxy.ServeHTTP(w, req)
-	}
+	h.proxy.ServeHTTP(w, req)
 }
 
 func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool {
