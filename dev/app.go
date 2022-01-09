@@ -238,6 +238,9 @@ func (a *App) Log() string {
 }
 
 const executionShell = `exec bash -c '
+# enable bash job control
+set -m
+
 cd %s
 
 if test -e ~/.powconfig && [ "$PUMADEV_SOURCE_POWCONFIG" != "0" ]; then
