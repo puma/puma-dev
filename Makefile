@@ -23,15 +23,15 @@ release:
 
 	mkdir rel/linux_amd64
 	mv -v puma-dev_linux_amd64 rel/linux_amd64/puma-dev
-	tar czvf "pkg/puma-dev-$$RELEASE-linux-amd64.tar.gz" rel/linux_amd64/puma-dev
+	tar -C rel/linux_amd64 -cvzf "pkg/puma-dev-$$RELEASE-linux-amd64.tar.gz" puma-dev
 
 	mkdir rel/darwin_amd64
 	mv -v puma-dev_darwin_amd64 rel/darwin_amd64/puma-dev
-	zip -v "pkg/puma-dev-$$RELEASE-darwin-amd64.zip" rel/darwin_amd64/puma-dev
+	zip -j -v "pkg/puma-dev-$$RELEASE-darwin-amd64.zip" rel/darwin_amd64/puma-dev
 
 	mkdir rel/darwin_arm64
 	mv -v puma-dev_darwin_arm64 rel/darwin_arm64/puma-dev
-	zip -v "pkg/puma-dev-$$RELEASE-darwin-arm64.zip" rel/darwin_arm64/puma-dev
+	zip -j -v "pkg/puma-dev-$$RELEASE-darwin-arm64.zip" rel/darwin_arm64/puma-dev
 
 test: clean-test
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
