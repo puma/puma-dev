@@ -12,21 +12,20 @@ jobs:
     steps:
       - uses: actions/setup-go@v1
         with:
-          go-version: 1.17.2
+          go-version: 1.17.6
 
       - run: go install github.com/mitchellh/gox@v1.0.2-0.20210311182516-8c3b2b9e647d
+      - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
 
       - name: get release version
         id: get_version
-        run: echo ::set-output name=RELEASE_TAG::${GITHUB_REF#refs/tags/}
+        run: echo ::set-output name=RELEASE_VERSION::${GITHUB_REF#refs/tags/v}
 
       - uses: actions/checkout@v2
 
-      - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
-
       - run: make release
         env:
-          RELEASE: ${{ steps.get_version.outputs.RELEASE_TAG }}
+          RELEASE: ${{ steps.get_version.outputs.RELEASE_VERSION }}
 
       - uses: ncipollo/release-action@v1
         with:
