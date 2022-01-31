@@ -51,19 +51,19 @@ jobs:
 
       - run: make release
         env:
-          RELEASE: devel
+          RELEASE: ${{ env.GITHUB_SHA }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-devel-linux-amd64
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-linux-amd64
           path: rel/linux_amd64/puma-dev
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-devel-darwin-amd64
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-amd64
           path: rel/darwin_amd64/puma-dev
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-devel-darwin-arm64
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-arm64
           path: rel/darwin_arm64/puma-dev
