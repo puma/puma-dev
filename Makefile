@@ -29,11 +29,11 @@ release:
 		zip -v "pkg/puma-dev-$$RELEASE-darwin-$$arch.zip" puma-dev; \
 	done
 
-test:
+test: clean-test
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
 clean-test:
-	rm -rf ~/.gotest-macos-puma-dev
+	rm -rf $$HOME/.puma-dev-test_*
 
 test-macos-filesystem-setup:
 	sudo mkdir -p /etc/resolver;

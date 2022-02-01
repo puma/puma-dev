@@ -10,7 +10,8 @@ import (
 )
 
 func TestAppPool_FindAppByDomainName_returnsAppWithExactName(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-app-test-exact-name-puma-dev")
+	t.Skip("temp")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-exact-name-puma-dev")
 	testAppsToLink := map[string]string{
 		"hipuma": "rack-hi-puma",
 	}
@@ -31,7 +32,8 @@ func TestAppPool_FindAppByDomainName_returnsAppWithExactName(t *testing.T) {
 }
 
 func TestAppPool_FindAppByDomainName_returnsAppWithExactSubdomain(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-app-test-exact-subdomain-puma-dev")
+	t.Skip("temp")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-exact-subdomain-puma-dev")
 	testAppsToLink := map[string]string{
 		"hipuma":     "rack-hi-puma",
 		"foo.hipuma": "static-hi-puma",
@@ -53,7 +55,8 @@ func TestAppPool_FindAppByDomainName_returnsAppWithExactSubdomain(t *testing.T) 
 }
 
 func TestAppPool_FindAppByDomainName_returnsAppWithBaseDomain(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-app-test-base-subdomain-puma-dev")
+	t.Skip("temp")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-base-subdomain-puma-dev")
 	testAppsToLink := map[string]string{
 		"hipuma": "rack-hi-puma",
 	}

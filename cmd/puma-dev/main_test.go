@@ -63,7 +63,7 @@ func TestMain_execWithExitStatus_commandArgs(t *testing.T) {
 		assert.Equal(t, true, result.shouldExit)
 	})
 
-	assert.Equal(t, "Error: Unknown command: nosoupforyou\n\n", execStdOut)
+	assert.Equal(t, "Error: unknown command: nosoupforyou\n", execStdOut)
 }
 
 func TestMain_allCheck_versionFlag(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 )
 
 func TestMainPumaDev_Linux(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-linux-puma-dev")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_linux-puma-dev")
 
 	defer LinkAllTestApps(t, appLinkDir)()
 

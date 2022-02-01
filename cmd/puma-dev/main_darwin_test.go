@@ -19,12 +19,12 @@ import (
 )
 
 func TestMainPumaDev_Darwin(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.gotest-macos-puma-dev")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_macos-puma-dev")
 
 	defer LinkAllTestApps(t, appLinkDir)()
 
 	serveErr := configureAndBootPumaDevServer(t, map[string]string{
-		"d":                     "test:puma",
+		"d":                     "test:puma:puma.dev",
 		"dir":                   appLinkDir,
 		"dns-port":              "65053",
 		"http-port":             "65080",
@@ -57,7 +57,14 @@ func TestMainPumaDev_Darwin(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
 
-		_, err = r.LookupIPAddr(ctx, "foo.tlddoesnotexist")
+		ips, err = r.LookupIPAddr(ctx, "foo.puma.dev")
+		assert.NoError(t, err)
+		assert.Equal(t, net.ParseIP("127.0.0.1").To4(), ips[0].IP.To4())
+
+		_, err = r.LookupIPAddr(ctx, "foo.dev")
+		assert.Error(t, err)
+
+		_, err = r.LookupIPAddr(ctx, "foo.dev-does-not-exist")
 		assert.Error(t, err)
 	})
 }

@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -63,14 +62,6 @@ func (h *HTTPServer) AppClosed(app *App) {
 	h.transport.CloseIdleConnections()
 }
 
-type ByDecreasingTLDComplexity []string
-
-func (a ByDecreasingTLDComplexity) Len() int      { return len(a) }
-func (a ByDecreasingTLDComplexity) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a ByDecreasingTLDComplexity) Less(i, j int) bool {
-	return strings.Count(a[i], ".") > strings.Count(a[j], ".")
-}
-
 func (h *HTTPServer) removeTLD(host string) string {
 	colon := strings.LastIndexByte(host, ':')
 	if colon != -1 {
@@ -90,10 +81,7 @@ func (h *HTTPServer) removeTLD(host string) string {
 		return name
 	}
 
-	if !sort.IsSorted(ByDecreasingTLDComplexity(h.Domains)) {
-		sort.Sort(ByDecreasingTLDComplexity(h.Domains))
-	}
-
+	// h.Domains is sorted by decreasing complexity
 	for _, tld := range h.Domains {
 		if strings.HasSuffix(host, "."+tld) {
 			return strings.TrimSuffix(host, "."+tld)
