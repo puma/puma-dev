@@ -10,14 +10,14 @@ import (
 )
 
 func TestAppPool_findAppByDomainName(t *testing.T) {
-	appLinkDir := homedir.MustExpand("~/.puma-dev_TestAppPool")
+	appLinkDir := homedir.MustExpand("~/.puma-dev-test_TestAppPool")
 	testAppsToLink := map[string]string{
 		"hipuma":     "rack-hi-puma",
 		"yopuma":     "rack-hi-puma",
 		"foo.hipuma": "static-hi-puma",
 	}
 
-	cleanupAppLinkDir := LinkTestApps(t, appLinkDir, testAppsToLink)
+	defer LinkTestApps(t, appLinkDir, testAppsToLink)()
 
 	var events Events
 	var testPool AppPool
@@ -40,6 +40,4 @@ func TestAppPool_findAppByDomainName(t *testing.T) {
 	// foo.yopuma should strip foo and return rack
 	app_foo_yopuma, _ := testPool.FindAppByDomainName("foo.yopuma")
 	assert.True(t, strings.HasPrefix(app_foo_yopuma.Name, "rack-hi-puma-"))
-
-	cleanupAppLinkDir()
 }
