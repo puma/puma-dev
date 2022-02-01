@@ -451,6 +451,7 @@ func (a *AppPool) maybeIdle(app *App) bool {
 
 var ErrUnknownApp = errors.New("unknown app")
 
+// Find an app by domain name. If the app is not running, launch it.
 func (a *AppPool) lookupApp(name string) (*App, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
