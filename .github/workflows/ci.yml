@@ -8,8 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, macos-11.0, ubuntu-latest]
-        go-version: [1.17.2]
-        ruby-version: [3.1]
+        go-version: [1.17.6]
 
     name: ${{ matrix.os }} / go-${{ matrix.go-version }}
     steps:
@@ -19,11 +18,11 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby-version }}
-
-      - uses: actions/checkout@v2
+          ruby-version: 3
 
       - run: gem install puma
+
+      - uses: actions/checkout@v2
 
       - if: contains(matrix.os, 'macos')
         run: |
@@ -35,3 +34,36 @@ jobs:
       - run: go mod download
 
       - run: go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
+
+  devel-release:
+    runs-on: macos-latest
+    needs: test
+
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.17.6
+
+      - run: go install github.com/mitchellh/gox@v1.0.2-0.20210311182516-8c3b2b9e647d
+      - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
+
+      - uses: actions/checkout@v2
+
+      - run: make release
+        env:
+          RELEASE: ${{ env.GITHUB_SHA }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-linux-amd64
+          path: rel/linux_amd64/puma-dev
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-amd64
+          path: rel/darwin_amd64/puma-dev
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-arm64
+          path: rel/darwin_arm64/puma-dev
