@@ -157,6 +157,18 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	return strings.TrimSpace(string(bodyBytes))
 }
 
+func parseDumpedHTTPHeadersFromBody(body string) map[string]string {
+	dumpedHeadersLines := strings.Split(body, "\n")
+
+	dumpedHeaders := make(map[string]string)
+	for _, pairString := range dumpedHeadersLines {
+		pair := strings.SplitN(pairString, " ", 2)
+		dumpedHeaders[pair[0]] = pair[1]
+	}
+
+	return dumpedHeaders
+}
+
 func pollForEvent(t *testing.T, app string, event string, reason string) error {
 	return retry.Do(
 		func() error {
@@ -294,18 +306,21 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
 	})
 
-	t.Run("request-headers-dump contains X-Forwarded-* headers", func(t *testing.T) {
+	t.Run("request-headers-dump contains X-Forwarded-* headers with http", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+		statusHost := "request-headers-dump"
+
+		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
+
+		assert.Equal(t, "127.0.0.1", dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Equal(t, "http", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
+	})
+
+	t.Run("request-headers-dump contains X-Forwarded-* headers with https", func(t *testing.T) {
 		reqURL := fmt.Sprintf("https://localhost:%d/", *fTLSPort)
 		statusHost := "request-headers-dump"
 
-		dumpedHeadersResponse := getURLWithHost(t, reqURL, statusHost)
-		dumpedHeadersResponseLines := strings.Split(dumpedHeadersResponse, "\n")
-
-		dumpedHeaders := make(map[string]string)
-		for _, pairString := range dumpedHeadersResponseLines {
-			pair := strings.SplitN(pairString, " ", 2)
-			dumpedHeaders[pair[0]] = pair[1]
-		}
+		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
 
 		assert.Equal(t, "127.0.0.1", dumpedHeaders["HTTP_X_FORWARDED_FOR"])
 		assert.Equal(t, "https", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
