@@ -9,69 +9,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAppPool_FindAppByDomainName_returnsAppWithExactName(t *testing.T) {
-	t.Skip("temp")
-	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-exact-name-puma-dev")
-	testAppsToLink := map[string]string{
-		"hipuma": "rack-hi-puma",
-	}
-	defer LinkTestApps(t, appLinkDir, testAppsToLink)()
-
-	var events Events
-
-	var testPool AppPool
-	testPool.Dir = appLinkDir
-	testPool.Events = &events
-
-	app, err := testPool.FindAppByDomainName("hipuma")
-	if err != nil {
-		assert.Fail(t, err.Error())
-	}
-
-	assert.True(t, strings.HasPrefix(app.Name, "rack-hi-puma-"))
-}
-
-func TestAppPool_FindAppByDomainName_returnsAppWithExactSubdomain(t *testing.T) {
-	t.Skip("temp")
-	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-exact-subdomain-puma-dev")
+func TestAppPool_findAppByDomainName(t *testing.T) {
+	appLinkDir := homedir.MustExpand("~/.puma-dev_TestAppPool")
 	testAppsToLink := map[string]string{
 		"hipuma":     "rack-hi-puma",
+		"yopuma":     "rack-hi-puma",
 		"foo.hipuma": "static-hi-puma",
 	}
-	defer LinkTestApps(t, appLinkDir, testAppsToLink)()
+
+	cleanupAppLinkDir := LinkTestApps(t, appLinkDir, testAppsToLink)
 
 	var events Events
-
 	var testPool AppPool
 	testPool.Dir = appLinkDir
 	testPool.Events = &events
 
-	app, err := testPool.FindAppByDomainName("foo.hipuma")
-	if err != nil {
-		assert.Fail(t, err.Error())
-	}
+	_, err := testPool.FindAppByDomainName("doesnotexist")
+	assert.Error(t, err)
 
-	assert.True(t, strings.HasPrefix(app.Name, "static-hi-puma-"))
-}
+	app_hipuma, _ := testPool.FindAppByDomainName("hipuma")
+	assert.True(t, strings.HasPrefix(app_hipuma.Name, "rack-hi-puma-"))
 
-func TestAppPool_FindAppByDomainName_returnsAppWithBaseDomain(t *testing.T) {
-	t.Skip("temp")
-	appLinkDir := homedir.MustExpand("~/.puma-dev-test_app-test-base-subdomain-puma-dev")
-	testAppsToLink := map[string]string{
-		"hipuma": "rack-hi-puma",
-	}
-	defer LinkTestApps(t, appLinkDir, testAppsToLink)()
+	app_yopuma, _ := testPool.FindAppByDomainName("yopuma")
+	assert.True(t, strings.HasPrefix(app_yopuma.Name, "rack-hi-puma-"))
 
-	var events Events
+	// foo.hipuma should match exactly and return static
+	app_foo_hipuma, _ := testPool.FindAppByDomainName("foo.hipuma")
+	assert.True(t, strings.HasPrefix(app_foo_hipuma.Name, "static-hi-puma-"))
 
-	var testPool AppPool
-	testPool.Dir = appLinkDir
-	testPool.Events = &events
+	// foo.yopuma should strip foo and return rack
+	app_foo_yopuma, _ := testPool.FindAppByDomainName("foo.yopuma")
+	assert.True(t, strings.HasPrefix(app_foo_yopuma.Name, "rack-hi-puma-"))
 
-	app, err := testPool.FindAppByDomainName("foo.hipuma")
-	if err != nil {
-		assert.Fail(t, err.Error())
-	}
-
-	assert.True(t, strings.HasPrefix(app.Name, "rack-hi-puma-"))
+	cleanupAppLinkDir()
 }
