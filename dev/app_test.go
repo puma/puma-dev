@@ -11,6 +11,7 @@ import (
 
 func TestAppPool_findAppByDomainName(t *testing.T) {
 	appLinkDir := homedir.MustExpand("~/.puma-dev-test_TestAppPool")
+
 	testAppsToLink := map[string]string{
 		"hipuma":     "rack-hi-puma",
 		"yopuma":     "rack-hi-puma",
@@ -19,10 +20,11 @@ func TestAppPool_findAppByDomainName(t *testing.T) {
 
 	defer LinkTestApps(t, appLinkDir, testAppsToLink)()
 
-	var events Events
-	var testPool AppPool
-	testPool.Dir = appLinkDir
-	testPool.Events = &events
+	var testEvents Events
+	testPool := &AppPool{
+		Dir:    appLinkDir,
+		Events: &testEvents,
+	}
 
 	_, err := testPool.FindAppByDomainName("doesnotexist")
 	assert.Error(t, err)
