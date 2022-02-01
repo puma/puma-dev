@@ -293,4 +293,21 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 
 		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
 	})
+
+	t.Run("request-headers-dump contains X-Forwarded-* headers", func(t *testing.T) {
+		reqURL := fmt.Sprintf("https://localhost:%d/", *fTLSPort)
+		statusHost := "request-headers-dump"
+
+		dumpedHeadersResponse := getURLWithHost(t, reqURL, statusHost)
+		dumpedHeadersResponseLines := strings.Split(dumpedHeadersResponse, "\n")
+
+		dumpedHeaders := make(map[string]string)
+		for _, pairString := range dumpedHeadersResponseLines {
+			pair := strings.SplitN(pairString, " ", 2)
+			dumpedHeaders[pair[0]] = pair[1]
+		}
+
+		assert.Equal(t, "127.0.0.1", dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Equal(t, "https", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
+	})
 }
