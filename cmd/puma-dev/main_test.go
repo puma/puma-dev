@@ -165,6 +165,8 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	return strings.TrimSpace(string(bodyBytes))
 }
 
+// function to parse dumped request headers sent by puma-dev to the origin server
+// for details see etc/rack-request-headers-dump/config.ru
 func parseDumpedHTTPHeadersFromBody(body string) map[string]string {
 	dumpedHeadersLines := strings.Split(body, "\n")
 
