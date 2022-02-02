@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -144,7 +145,14 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Host = host
 
-	resp, err := http.DefaultClient.Do(req)
+	// we don't care about checking certs in tests
+	// the generated cert will not be trusted by the test runner
+	insecureTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	insecureClient := &http.Client{Transport: insecureTransport}
+
+	resp, err := insecureClient.Do(req)
 
 	if err != nil {
 		assert.FailNow(t, err.Error())
