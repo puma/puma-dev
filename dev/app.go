@@ -238,7 +238,11 @@ func (a *App) Log() string {
 }
 
 const executionShell = `exec bash -c '
-cd %s
+if command -v readlink; then
+  cd $(readlink --canonicalize '%s')
+else
+  cd '%s'
+end
 
 if test -e ~/.powconfig && [ "$PUMADEV_SOURCE_POWCONFIG" != "0" ]; then
 	source ~/.powconfig
@@ -284,7 +288,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	}
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
+		fmt.Sprintf(executionShell, dir, dir, name, socket, name, socket))
 
 	cmd.Dir = dir
 
