@@ -49,9 +49,8 @@ type App struct {
 	pool    *AppPool
 	lastUse time.Time
 
-	lock sync.Mutex
-
-	booting bool
+	// lock sync.Mutex
+	// booting bool
 
 	readyChan chan struct{}
 }
@@ -133,7 +132,7 @@ func (a *App) watch() error {
 	reason := "detected interval shutdown"
 
 	select {
-	case err = <-c:
+	case <-c:
 		reason = "stdout/stderr closed"
 		err = fmt.Errorf("%s:\n\t%s", ErrUnexpectedExit, a.lastLogLine)
 	case <-a.t.Dying():
@@ -237,32 +236,15 @@ func (a *App) Log() string {
 	return buf.String()
 }
 
-const executionShell = `exec bash -c '
+const pumaShellScriptTemplate = `exec bash -c '
+which -a puma
+env
+
 if command -v readlink; then
-  cd $(readlink --canonicalize '%s')
+  cd $(readlink '%s')
 else
   cd '%s'
 end
-
-if test -e ~/.powconfig && [ "$PUMADEV_SOURCE_POWCONFIG" != "0" ]; then
-	source ~/.powconfig
-fi
-
-if test -e .env && [ "$PUMADEV_SOURCE_ENV" != "0" ]; then
-	source .env
-fi
-
-if test -e .powrc && [ "$PUMADEV_SOURCE_POWRC" != "0" ]; then
-	source .powrc
-fi
-
-if test -e .powenv && [ "$PUMADEV_SOURCE_POWENV" != "0" ]; then
-	source .powenv
-fi
-
-if test -e .pumaenv && [ "$PUMADEV_SOURCE_PUMAENV" != "0" ]; then
-	source .pumaenv
-fi
 
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
 	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
@@ -280,24 +262,29 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
 
-	shell := os.Getenv("SHELL")
+	baseMapEnv := GetMapEnviron()
+	baseMapEnv["THREADS"] = fmt.Sprintf("%d", DefaultThreads)
+	baseMapEnv["WORKERS"] = "4"
+	baseMapEnv["CONFIG"] = "-"
 
-	if shell == "" {
-		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
-		shell = "/bin/bash"
+	mapEnv, err := Load(baseMapEnv, dir)
+	if err != nil {
+		return nil, err
 	}
 
-	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf(executionShell, dir, dir, name, socket, name, socket))
+	// use SHELL from OS env or app env
+	execShell := mapEnv["SHELL"]
+	if execShell == "" {
+		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
+		execShell = "/bin/bash"
+	}
 
+	pumaShellScript := fmt.Sprintf(pumaShellScriptTemplate, dir, dir, name, socket, name, socket)
+	fmt.Println(pumaShellScript)
+
+	cmd := exec.Command(execShell, "-l", "-i", "-c", pumaShellScript)
 	cmd.Dir = dir
-
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("THREADS=%d", DefaultThreads),
-		"WORKERS=0",
-		"CONFIG=-",
-	)
+	cmd.Env = ToCmdEnv(mapEnv)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
