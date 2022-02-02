@@ -322,7 +322,7 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 
 		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
 
-		assert.Equal(t, "127.0.0.1", dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Regexp(t, `127\.0\.0\.1|::1`, dumpedHeaders["HTTP_X_FORWARDED_FOR"])
 		assert.Equal(t, "http", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
 	})
 
@@ -332,7 +332,7 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 
 		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
 
-		assert.Equal(t, "127.0.0.1", dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Regexp(t, `^127\.0\.0\.1|::1`, dumpedHeaders["HTTP_X_FORWARDED_FOR"])
 		assert.Equal(t, "https", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
 	})
 }
