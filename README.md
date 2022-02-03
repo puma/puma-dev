@@ -335,7 +335,7 @@ The status includes:
 
 ### Events API
 
-Puma-dev emites a number of internal events and exposes them through an events API. These events can be helpful when troubleshooting configuration errors. To access it, send a request with the `Host: puma-dev` and the path `/events`, for example: `curl -H "Host: puma-dev" localhost/events`.
+Puma-dev emits a number of internal events and exposes them through an events API. These events can be helpful when troubleshooting configuration errors. To access it, send a request with the `Host: puma-dev` and the path `/events`, for example: `curl -H "Host: puma-dev" localhost/events`.
 
 ## Development
 
@@ -349,7 +349,7 @@ To build puma-dev, follow these steps:
 
 ### Releasing & Packaging for Homebrew
 
-Tagged builds (e.g `v0.18.0`) will automatically create a [pre-release](https://github.com/puma/puma-dev/releases) with distributable binaries that can be referenced via the Homebrew formula.
+Tagged builds (e.g `v0.18.0`) will automatically create [pre-release](https://github.com/puma/puma-dev/releases) with artifacts for use in the Homebrew formula.
 
 All [builds with passing tests](https://github.com/puma/puma-dev/actions) will publish binaries that are saved for 90 days.
 
