@@ -335,38 +335,21 @@ The status includes:
 
 ### Events API
 
-Puma-dev emites a number of internal events and exposes them through an events API. These events can be helpful when troubleshooting configuration errors. To access it, send a request with the `Host: puma-dev` and the path `/events`, for example: `curl -H "Host: puma-dev" localhost/events`.
+Puma-dev emits a number of internal events and exposes them through an events API. These events can be helpful when troubleshooting configuration errors. To access it, send a request with the `Host: puma-dev` and the path `/events`, for example: `curl -H "Host: puma-dev" localhost/events`.
 
 ## Development
 
 To build puma-dev, follow these steps:
 
-- Install [golang](http://golang.org)
-- Run `go get github.com/puma/puma-dev/...`
-- Run `go get github.com/vektra/errors/...`
-- Run `$GOPATH/bin/puma-dev` to use your new binary
-
-Puma-dev uses [govendor](https://github.com/kardianos/govendor) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `govendor fetch +vendor <package path>` to pull it into `vendor`. Then you can use it from within `puma-dev/src`
+- Install a recent version of [golang](http://golang.org)
+- Clone the repo
+- Run `go mod download`
+- Run `make build`
+- Run `./puma-dev -V` to use your new binary
 
 ### Releasing & Packaging for Homebrew
 
-This script compiles Darwin and Linux binaries, creates a release tag, and uploads the binaries to the release. The Darwin binary can then be referenced in [puma/homebrew-puma](https://github.com/puma/homebrew-puma/blob/bd977276dace11f9b31e6181aa770d676a996b11/puma-dev.rb#L4).
+Tagged builds (e.g `v0.18.0`) will automatically create [pre-release](https://github.com/puma/puma-dev/releases) with artifacts for use in the Homebrew formula.
 
-```shell
-# Gox is a "A dead simple, no frills Go cross compile tool." It's used inside `make release`.
-go get -u github.com/mitchellh/gox
-# Ghr can be used to "Upload multiple artifacts to GitHub Release in parallel."
-go get -u github.com/tcnksm/ghr
+All [builds with passing tests](https://github.com/puma/puma-dev/actions) will publish binaries that are saved for 90 days.
 
-export OWNER="puma"
-export REPO="puma-dev"
-export RELEASE="0.13"
-export GITHUB_TOKEN="$GITHUB_API_TOKEN"
-
-make release
-
-git tag -f "v${RELEASE}"
-git push origin "v${RELEASE}"
-
-ghr -u $OWNER  -t $GITHUB_TOKEN -r $REPO  -n "v${RELEASE}" -delete -prerelease "v${RELEASE}" ./pkg/
-```
