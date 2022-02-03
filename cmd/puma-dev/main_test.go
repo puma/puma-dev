@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -144,7 +145,14 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Host = host
 
-	resp, err := http.DefaultClient.Do(req)
+	// we don't care about checking certs in tests
+	// the generated cert will not be trusted by the test runner
+	insecureTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	insecureClient := &http.Client{Transport: insecureTransport}
+
+	resp, err := insecureClient.Do(req)
 
 	if err != nil {
 		assert.FailNow(t, err.Error())
@@ -155,6 +163,20 @@ func getURLWithHost(t *testing.T, url string, host string) string {
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 
 	return strings.TrimSpace(string(bodyBytes))
+}
+
+// function to parse dumped request headers sent by puma-dev to the origin server
+// for details see etc/rack-request-headers-dump/config.ru
+func parseDumpedHTTPHeadersFromBody(body string) map[string]string {
+	dumpedHeadersLines := strings.Split(body, "\n")
+
+	dumpedHeaders := make(map[string]string)
+	for _, pairString := range dumpedHeadersLines {
+		pair := strings.SplitN(pairString, " ", 2)
+		dumpedHeaders[pair[0]] = pair[1]
+	}
+
+	return dumpedHeaders
 }
 
 func pollForEvent(t *testing.T, app string, event string, reason string) error {
@@ -292,5 +314,25 @@ func runPlatformAgnosticTestScenarios(t *testing.T) {
 		statusHost := "static-site"
 
 		assert.Equal(t, "rack wuz here", getURLWithHost(t, reqURL, statusHost))
+	})
+
+	t.Run("request-headers-dump contains X-Forwarded-* headers with http", func(t *testing.T) {
+		reqURL := fmt.Sprintf("http://localhost:%d/", *fHTTPPort)
+		statusHost := "request-headers-dump"
+
+		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
+
+		assert.Regexp(t, `127\.0\.0\.1|::1`, dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Equal(t, "http", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
+	})
+
+	t.Run("request-headers-dump contains X-Forwarded-* headers with https", func(t *testing.T) {
+		reqURL := fmt.Sprintf("https://localhost:%d/", *fTLSPort)
+		statusHost := "request-headers-dump"
+
+		dumpedHeaders := parseDumpedHTTPHeadersFromBody(getURLWithHost(t, reqURL, statusHost))
+
+		assert.Regexp(t, `^127\.0\.0\.1|::1`, dumpedHeaders["HTTP_X_FORWARDED_FOR"])
+		assert.Equal(t, "https", dumpedHeaders["HTTP_X_FORWARDED_PROTO"])
 	})
 }

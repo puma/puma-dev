@@ -144,6 +144,12 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	if req.TLS == nil {
+		req.Header.Set("X-Forwarded-Proto", "http")
+	} else {
+		req.Header.Set("X-Forwarded-Proto", "https")
+	}
+
 	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
 	h.proxy.ServeHTTP(w, req)
 }

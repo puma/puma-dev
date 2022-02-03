@@ -220,8 +220,9 @@ func LinkTestApps(t *testing.T, workingDirPath string, testAppsToLink map[string
 
 func LinkAllTestApps(t *testing.T, workingDirPath string) func() {
 	testAppsToLink := map[string]string{
-		"hipuma":      "rack-hi-puma",
-		"static-site": "static-hi-puma",
+		"hipuma":               "rack-hi-puma",
+		"static-site":          "static-hi-puma",
+		"request-headers-dump": "rack-request-headers-dump",
 	}
 
 	return LinkTestApps(t, workingDirPath, testAppsToLink)
