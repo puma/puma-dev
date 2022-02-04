@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-    - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -26,6 +26,8 @@ jobs:
       - run: make release
         env:
           RELEASE: ${{ steps.get_version.outputs.RELEASE_VERSION }}
+
+      - run: openssl dgst -sha256 pkg/*
 
       - uses: ncipollo/release-action@v1
         with:
