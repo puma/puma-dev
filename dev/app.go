@@ -47,9 +47,6 @@ type App struct {
 	pool    *AppPool
 	lastUse time.Time
 
-	// lock sync.Mutex
-	// booting bool
-
 	readyChan chan struct{}
 }
 
@@ -234,16 +231,6 @@ func (a *App) Log() string {
 	return buf.String()
 }
 
-const pumaShellScriptTemplate = `exec %s -c '
-cd %s
-
-if test -e Gemfile && bundle exec puma -V &>/dev/null; then
-	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
-fi
-
-exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
-`
-
 func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	appDir, dirErr := filepath.EvalSymlinks(dir)
 	if dirErr != nil {
@@ -257,28 +244,10 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
 
-	osMapEnv := GetMapEnviron()
-	osMapEnv["THREADS"] = "5"
-	osMapEnv["WORKERS"] = "4"
-	osMapEnv["CONFIG"] = "-"
-
-	mapEnv, err := LoadEnv(osMapEnv, appDir)
+	cmd, err := BuildPumaCommand(name, socket, appDir)
 	if err != nil {
 		return nil, err
 	}
-
-	// use SHELL from OS env or app env
-	execShell := mapEnv["SHELL"]
-	if execShell == "" {
-		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
-		execShell = "/bin/bash"
-	}
-
-	pumaShellScript := fmt.Sprintf(pumaShellScriptTemplate, execShell, appDir, name, socket, name, socket)
-
-	cmd := exec.Command(execShell, "-l", "-i", "-c", pumaShellScript)
-	cmd.Dir = dir
-	cmd.Env = ToCmdEnv(mapEnv)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -623,4 +592,52 @@ func (a *AppPool) Purge() {
 	}
 
 	a.Events.Add("apps_purged")
+}
+
+const pumaShellScriptTemplate = `exec %s -c '
+cd %s
+
+if test -e Gemfile && bundle exec puma -V &>/dev/null; then
+  exec bundle exec puma %s
+fi
+
+exec puma %s
+'` // <-- don't forget this closing quote
+
+func BuildPumaCommand(appName string, socketPath string, appDir string) (*exec.Cmd, error) {
+	osMapEnv := GetMapEnviron()
+
+	mapEnv, err := LoadEnv(osMapEnv, appDir)
+	if err != nil {
+		return nil, err
+	}
+
+	pumaArgs := fmt.Sprintf("--tag puma-dev:%s -b unix:%s", appName, socketPath)
+
+	if workers, exist := mapEnv["WORKERS"]; exist {
+		pumaArgs = fmt.Sprintf("-w%s %s", workers, pumaArgs)
+	}
+
+	if threads, exist := mapEnv["THREADS"]; exist {
+		pumaArgs = fmt.Sprintf("-t0:%s %s", threads, pumaArgs)
+	}
+
+	if config, exist := mapEnv["CONFIG"]; exist {
+		pumaArgs = fmt.Sprintf("-C%s %s", config, pumaArgs)
+	}
+
+	// use SHELL from OS env or app env
+	execShell := mapEnv["SHELL"]
+	if execShell == "" {
+		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
+		execShell = "/bin/bash"
+	}
+
+	script := fmt.Sprintf(pumaShellScriptTemplate, execShell, appDir, pumaArgs, pumaArgs)
+
+	cmd := exec.Command(execShell, "-l", "-i", "-c", script)
+	cmd.Dir = appDir
+	cmd.Env = ToCmdEnv(mapEnv)
+
+	return cmd, nil
 }
