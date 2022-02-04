@@ -50,6 +50,10 @@ jobs:
         with:
           go-version: 1.17.6
 
+      - name: Get short SHA
+        id: version
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c-8)"
+
       - run: go install github.com/mitchellh/gox@v1.0.2-0.20210311182516-8c3b2b9e647d
       - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
 
@@ -57,19 +61,19 @@ jobs:
 
       - run: make release
         env:
-          RELEASE: ${{ env.GITHUB_SHA }}
+          RELEASE: ${{ steps.version.outputs.sha8 }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-linux-amd64
+          name: puma-dev-${{ steps.version.outputs.sha8 }}-linux-amd64
           path: rel/linux_amd64/puma-dev
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-amd64
+          name: puma-dev-${{ steps.version.outputs.sha8 }}-darwin-amd64
           path: rel/darwin_amd64/puma-dev
 
       - uses: actions/upload-artifact@v2
         with:
-          name: puma-dev-${{ env.GITHUB_RUN_NUMBER }}-darwin-arm64
+          name: puma-dev-${{ steps.version.outputs.sha8 }}-darwin-arm64
           path: rel/darwin_arm64/puma-dev
