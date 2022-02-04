@@ -234,7 +234,7 @@ func (a *App) Log() string {
 	return buf.String()
 }
 
-const pumaShellScriptTemplate = `exec bash -c '
+const pumaShellScriptTemplate = `exec %s -c '
 cd %s
 
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
@@ -246,7 +246,7 @@ exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 
 func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	appDir, dirErr := filepath.EvalSymlinks(dir)
-	if (dirErr != nil) {
+	if dirErr != nil {
 		return nil, dirErr
 	}
 
@@ -257,12 +257,12 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	socket := filepath.Join(tmpDir, fmt.Sprintf("puma-dev-%d.sock", os.Getpid()))
 
-	baseMapEnv := GetMapEnviron()
-	baseMapEnv["THREADS"] = "5"
-	baseMapEnv["WORKERS"] = "4"
-	baseMapEnv["CONFIG"] = "-"
+	osMapEnv := GetMapEnviron()
+	osMapEnv["THREADS"] = "5"
+	osMapEnv["WORKERS"] = "4"
+	osMapEnv["CONFIG"] = "-"
 
-	mapEnv, err := LoadEnv(baseMapEnv, appDir)
+	mapEnv, err := LoadEnv(osMapEnv, appDir)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		execShell = "/bin/bash"
 	}
 
-	pumaShellScript := fmt.Sprintf(pumaShellScriptTemplate, appDir, name, socket, name, socket)
+	pumaShellScript := fmt.Sprintf(pumaShellScriptTemplate, execShell, appDir, name, socket, name, socket)
 
 	cmd := exec.Command(execShell, "-l", "-i", "-c", pumaShellScript)
 	cmd.Dir = dir
