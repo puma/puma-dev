@@ -1,6 +1,7 @@
 package dev
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	"github.com/bmizerany/pat"
-	"github.com/puma/puma-dev/httpu"
 )
 
 type HTTPServer struct {
@@ -26,28 +26,59 @@ type HTTPServer struct {
 	IgnoredStaticPaths []string
 	Domains            []string
 
-	mux       *pat.PatternServeMux
-	transport *httpu.Transport
-	proxy     *httputil.ReverseProxy
+	mux           *pat.PatternServeMux
+	unixTransport *http.Transport
+	unixProxy     *httputil.ReverseProxy
+	tcpTransport  *http.Transport
+	tcpProxy      *httputil.ReverseProxy
 }
 
+const dialerTimeout = 5 * time.Second
+const keepAlive = 10 * time.Second
+const tlsHandshakeTimeout = 10 * time.Second
+const expectContinueTimeout = 1 * time.Second
+const proxyFlushInternal = 1 * time.Second
+
 func (h *HTTPServer) Setup() {
-	h.transport = &httpu.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 10 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+	h.unixTransport = &http.Transport{
+		DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
+			socketPath, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+
+			dialer := net.Dialer{
+				Timeout:   dialerTimeout,
+				KeepAlive: keepAlive,
+			}
+			return dialer.DialContext(ctx, "unix", socketPath)
+		},
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
+	}
+
+	h.unixProxy = &httputil.ReverseProxy{
+		Director:      func(_ *http.Request) {},
+		Transport:     h.unixTransport,
+		FlushInterval: proxyFlushInternal,
+	}
+
+	h.tcpTransport = &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   dialerTimeout,
+			KeepAlive: keepAlive,
+		}).DialContext,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
+	}
+
+	h.tcpProxy = &httputil.ReverseProxy{
+		Director:      func(_ *http.Request) {},
+		Transport:     h.tcpTransport,
+		FlushInterval: proxyFlushInternal,
 	}
 
 	h.Pool.AppClosed = h.AppClosed
-
-	h.proxy = &httputil.ReverseProxy{
-		Director:      func(_ *http.Request) {},
-		Transport:     h.transport,
-		FlushInterval: 1 * time.Second,
-	}
 
 	h.mux = pat.New()
 
@@ -59,7 +90,8 @@ func (h *HTTPServer) AppClosed(app *App) {
 	// Whenever an app is closed, wipe out all idle conns. This
 	// obviously closes down more than just this one apps connections
 	// but that's ok.
-	h.transport.CloseIdleConnections()
+	h.unixTransport.CloseIdleConnections()
+	h.tcpTransport.CloseIdleConnections()
 }
 
 func (h *HTTPServer) removeTLD(host string) string {
@@ -151,7 +183,13 @@ func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
-	h.proxy.ServeHTTP(w, req)
+	if app.Scheme == "httpu" {
+		req.URL.Scheme, req.URL.Host = "http", app.Address()
+		h.unixProxy.ServeHTTP(w, req)
+	} else {
+		req.URL.Scheme, req.URL.Host = app.Scheme, app.Address()
+		h.tcpProxy.ServeHTTP(w, req)
+	}
 }
 
 func (h *HTTPServer) shouldServePublicPathForApp(a *App, req *http.Request) bool {
