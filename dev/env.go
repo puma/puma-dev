@@ -10,8 +10,8 @@ import (
 	"github.com/puma/puma-dev/homedir"
 )
 
-// load paths in order of preference, first to set a variable wins
 // `.pumaenv` has highest priority, `~/.powconfig` has lowest.
+// Be sure to keep these in sync with the pumaShellScriptTemplate in app.go
 var AppEnvPaths = []string{".env", ".powrc", ".powenv", ".pumaenv"}
 var HomeEnvPaths = []string{"~/.powconfig", "~/.pumaenv"}
 
@@ -42,7 +42,7 @@ func LoadEnv(baseEnv map[string]string, dir string) (envMap map[string]string, e
 		appEnv, err := godotenv.Read(envPaths...)
 		if err != nil {
 			// if any path fails to load, bail out.
-			return nil, fmt.Errorf("LoadEnv failed. %s", err.Error())
+			return nil, fmt.Errorf("%v in %v", err, envPaths)
 		}
 
 		// merge contents from appEnv into envMap

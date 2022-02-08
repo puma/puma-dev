@@ -597,6 +597,30 @@ func (a *AppPool) Purge() {
 const pumaShellScriptTemplate = `exec %s -c '
 cd %s
 
+if test -e ~/.powconfig && [ "$PUMADEV_SOURCE_POWCONFIG" != "0" ]; then
+  source ~/.powconfig
+fi
+
+if test -e ~/.pumaenv && [ "$PUMADEV_SOURCE_HOME_PUMAENV" != "0" ]; then
+  source ~/.pumaenv
+fi
+
+if test -e .env && [ "$PUMADEV_SOURCE_ENV" != "0" ]; then
+  source .env
+fi
+
+if test -e .powrc && [ "$PUMADEV_SOURCE_POWRC" != "0" ]; then
+  source .powrc
+fi
+
+if test -e .powenv && [ "$PUMADEV_SOURCE_POWENV" != "0" ]; then
+  source .powenv
+fi
+
+if test -e .pumaenv && [ "$PUMADEV_SOURCE_PUMAENV" != "0" ]; then
+  source .pumaenv
+fi
+
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
   exec bundle exec puma %s
 fi
@@ -605,11 +629,17 @@ exec puma %s
 '` // <-- don't forget this closing quote
 
 func BuildPumaCommand(appName string, socketPath string, appDir string) (*exec.Cmd, error) {
+
 	osMapEnv := GetMapEnviron()
 
+	// This environment will be fed into the puma exec shell.
+	// However, we _also_ source each supported env file inside the shell to allow for
+	// custom environment grooming.
+	var mapEnv map[string]string
 	mapEnv, err := LoadEnv(osMapEnv, appDir)
 	if err != nil {
-		return nil, err
+		fmt.Printf("! Falling back to default environment. %v\n", err.Error())
+		mapEnv = osMapEnv
 	}
 
 	pumaArgs := fmt.Sprintf("--tag puma-dev:%s -b unix:%s", appName, socketPath)
@@ -629,7 +659,7 @@ func BuildPumaCommand(appName string, socketPath string, appDir string) (*exec.C
 	// use SHELL from OS env or app env
 	execShell := mapEnv["SHELL"]
 	if execShell == "" {
-		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
+		fmt.Printf("! SHELL env var not set, using /bin/bash by default\n")
 		execShell = "/bin/bash"
 	}
 

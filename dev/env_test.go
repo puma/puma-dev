@@ -11,6 +11,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLoadEnv_shellScript(t *testing.T) {
+	base := make(map[string]string)
+	appDir, _ := os.MkdirTemp("/tmp", "TestLoadEnv_fileEnvPriority")
+
+	// if an env file contains more than just variables, we'll bail out
+	// and fall back to default behavior
+	ioutil.WriteFile(filepath.Join(appDir, ".powrc"), []byte(`function puma-dev-test () { echo 'hi puma'; }`), fs.FileMode(0600))
+
+	_, err := LoadEnv(base, appDir)
+
+	assert.Error(t, err)
+}
+
 func TestLoadEnv_fileEnvPriority(t *testing.T) {
 	base := make(map[string]string)
 	appDir, _ := os.MkdirTemp("/tmp", "TestLoadEnv_fileEnvPriority")
