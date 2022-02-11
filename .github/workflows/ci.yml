@@ -13,10 +13,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, macos-11.0, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         go-version: [1.17.6]
+        shell: [/bin/bash, /bin/zsh]
 
-    name: ${{ matrix.os }} / go-${{ matrix.go-version }}
+    name: ${{ matrix.os }} / go-${{ matrix.go-version }} / ${{ matrix.shell }}
     steps:
       - uses: actions/setup-go@v1
         with:
@@ -30,6 +31,9 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - if: contains(matrix.os, 'ubuntu')
+        run: sudo apt install zsh
+
       - if: contains(matrix.os, 'macos')
         run: |
           sw_vers
@@ -40,6 +44,8 @@ jobs:
       - run: go mod download
 
       - run: go test -v -race -coverprofile=coverage.out -covermode=atomic -timeout=300s ./...
+        env:
+          SHELL: ${{ matrix.shell }}
 
   devel-release:
     runs-on: macos-latest
