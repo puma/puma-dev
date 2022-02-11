@@ -263,10 +263,17 @@ fi
 exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 `
 
-func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
-	tmpDir := filepath.Join(dir, "tmp")
-	err := os.MkdirAll(tmpDir, 0755)
+func (pool *AppPool) LaunchApp(name, inDir string) (*App, error) {
+	appDir, err := filepath.EvalSymlinks(inDir)
 	if err != nil {
+		// error resolving full appDir path
+		return nil, err
+	}
+
+	tmpDir := filepath.Join(appDir, "tmp")
+	err = os.MkdirAll(tmpDir, 0755)
+	if err != nil {
+		// error creating appDir/tmp directory
 		return nil, err
 	}
 
@@ -280,10 +287,9 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 	}
 
 	cmd := exec.Command(shell, "-l", "-i", "-c",
-		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
+		fmt.Sprintf(executionShell, appDir, name, socket, name, socket))
 
-	cmd.Dir = dir
-
+	cmd.Dir = appDir
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
 		fmt.Sprintf("THREADS=%d", DefaultThreads),
@@ -310,7 +316,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		Command:   cmd,
 		Events:    pool.Events,
 		stdout:    stdout,
-		dir:       dir,
+		dir:       appDir,
 		pool:      pool,
 		readyChan: make(chan struct{}),
 		lastUse:   time.Now(),
@@ -318,7 +324,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	app.eventAdd("booting_app", "socket", socket)
 
-	stat, err := os.Stat(filepath.Join(dir, "public"))
+	stat, err := os.Stat(filepath.Join(appDir, "public"))
 	if err == nil {
 		app.Public = stat.IsDir()
 	}
