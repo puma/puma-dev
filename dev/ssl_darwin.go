@@ -36,7 +36,7 @@ func TrustCert(cert string) error {
 
 func DeleteAllPumaDevCAFromDefaultKeychain() error {
 	deleteAllBashCommand := `
-	for sha in $(security find-certificate -a -c "Puma-dev CA" -Z | awk '/SHA-1/ {print $3}'); do 
+	for sha in $(security find-certificate -a -c "Puma-dev CA" -Z | awk '/SHA-1/ {print $3}'); do
 		security delete-certificate -t -Z $sha || security delete-certificate -Z $sha
 	done
 	`
@@ -65,5 +65,5 @@ func loginKeyChain() (string, error) {
 		return "", fmt.Errorf("could not find login keychain. security login-keychain had %s, %s", err.Error(), stderr.Bytes())
 	}
 
-	return string(stdout.Bytes()), nil
+	return stdout.String(), nil
 }
