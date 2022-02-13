@@ -5,14 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/vektra/neko"
 )
 
 func TestLineBuffer(t *testing.T) {
-	n := neko.Start(t)
-
-	n.It("appends lines to the buffer", func() {
+	t.Run("appends lines to the buffer", func(t *testing.T) {
 		var lb LineBuffer
 
 		lb.Append("hello")
@@ -20,12 +16,12 @@ func TestLineBuffer(t *testing.T) {
 		var buf bytes.Buffer
 
 		n, err := lb.WriteTo(&buf)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		assert.Equal(t, int64(5), n)
 	})
 
-	n.It("wraps around automatically", func() {
+	t.Run("wraps around automatically", func(t *testing.T) {
 		var lb LineBuffer
 
 		lb.Size = 3
@@ -49,7 +45,7 @@ func TestLineBuffer(t *testing.T) {
 		assert.Equal(t, "hello4", lines[2])
 	})
 
-	n.It("wraps around automatically multiple times", func() {
+	t.Run("wraps around automatically multiple times", func(t *testing.T) {
 		var lb LineBuffer
 
 		lb.Size = 3
@@ -76,5 +72,4 @@ func TestLineBuffer(t *testing.T) {
 		assert.Equal(t, "hello7", lines[2])
 	})
 
-	n.Meow()
 }
