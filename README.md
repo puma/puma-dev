@@ -65,7 +65,7 @@ If you wish to have `puma-dev` use a port other than 80, pass it via the `-insta
 
 _NOTE:_ If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working).
 
-_NOTE:_ If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
+_NOTE:_ If you had pow installed before in the system, please make sure to run pow's uninstall script. Read more details in [the pow manual](https://web.archive.org/web/20210303192222/http://pow.cx/manual.html#section_1.2).
 
 ### Uninstall
 
@@ -214,7 +214,7 @@ Additionally, puma-dev uses a few other environment variables to control how pum
 - Default domain is `.test`.
   - Previously it was `.dev`, but it is owned by Google and since Dec 2017 **HSTS only** with real websites hosted there.
   - Don't use `.dev` and `.foo`, as they are real TLDs.
-- Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](http://pow.cx/manual.html#section_1.2).
+- Using pow? To avoid conflicts, use different ports and domain or [uninstall pow properly](https://web.archive.org/web/20210303192222/http://pow.cx/manual.html#section_1.2).
 
 ### Restarting
 
