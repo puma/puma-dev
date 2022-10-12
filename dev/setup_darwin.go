@@ -98,6 +98,7 @@ func Cleanup() {
 type InstallIntoSystemArgs struct {
 	ListenPort         int
 	TlsPort            int
+	ListenAddress      string
 	LogfilePath        string
 	ApplinkDirPath     string
 	LaunchAgentDirPath string
@@ -151,14 +152,14 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
        <key>Socket</key>
        <dict>
            <key>SockNodeName</key>
-           <string>0.0.0.0</string>
+           <string>%s</string>
            <key>SockServiceName</key>
            <string>%d</string>
        </dict>
        <key>SocketTLS</key>
        <dict>
            <key>SockNodeName</key>
-           <string>0.0.0.0</string>
+           <string>%s</string>
            <key>SockServiceName</key>
            <string>%d</string>
        </dict>
@@ -184,7 +185,7 @@ func InstallIntoSystem(config *InstallIntoSystemArgs) error {
 
 	err = ioutil.WriteFile(
 		plist,
-		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.NoServePublicPaths, config.ListenPort, config.TlsPort, logPath, logPath)),
+		[]byte(fmt.Sprintf(userTemplate, binPath, dir, config.Domains, config.Timeout, config.NoServePublicPaths, config.ListenAddress, config.ListenPort, config.ListenAddress, config.TlsPort, logPath, logPath)),
 		0644,
 	)
 

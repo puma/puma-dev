@@ -32,9 +32,10 @@ var (
 	fSetup = flag.Bool("setup", false, "Run system setup")
 	fStop  = flag.Bool("stop", false, "Stop all puma-dev servers")
 
-	fInstall     = flag.Bool("install", false, "Install puma-dev as a user service")
-	fInstallPort = flag.Int("install-port", 80, "Port to run puma-dev on when installed")
-	fInstallTLS  = flag.Int("install-https-port", 443, "Port to run puma-dev for SSL on when installed")
+	fInstall     					= flag.Bool("install", false, "Install puma-dev as a user service")
+	fInstallListenAddress = flag.String("install-listen-address", "0.0.0.0", "address to listen on when installed")
+	fInstallPort 					= flag.Int("install-port", 80, "Port to run puma-dev on when installed")
+	fInstallTLS  					= flag.Int("install-https-port", 443, "Port to run puma-dev for SSL on when installed")
 
 	fCleanup   = flag.Bool("cleanup", false, "Cleanup old system settings")
 	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
@@ -79,6 +80,7 @@ func main() {
 			ApplinkDirPath:     *fDir,
 			Domains:            *fDomains,
 			LaunchAgentDirPath: LaunchAgentDirPath,
+			ListenAddress:      *fInstallListenAddress,
 			ListenPort:         *fInstallPort,
 			LogfilePath:        LogFilePath,
 			Timeout:            (*fTimeout).String(),
