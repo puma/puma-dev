@@ -234,6 +234,8 @@ Puma-dev will startup by default using the directory `~/.puma-dev`, looking for 
 
 Running `puma-dev` in this way will require you to use the listed http port, which is `9280` by default.
 
+On macOS, you can specify where the server should listen with the `-listen-address` flag
+
 ### Coming from v0.2
 
 Puma-dev v0.3 and later use launchd to access privileged ports, so if you installed v0.2, you'll need to remove the firewall rules.
