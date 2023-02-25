@@ -4,7 +4,7 @@ on:
   # build pushes to master
   push:
     branches:
-      - master
+      - '*'
   # build PRs from forks
   pull_request:
 
@@ -14,12 +14,12 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
-        go-version: [1.17.6]
+        go-version: [1.20.1]
         shell: [/bin/bash, /bin/zsh]
 
     name: ${{ matrix.os }} / go-${{ matrix.go-version }} / ${{ matrix.shell }}
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -29,7 +29,7 @@ jobs:
 
       - run: gem install puma
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - if: contains(matrix.os, 'ubuntu')
         run: sudo apt install zsh
@@ -52,9 +52,9 @@ jobs:
     needs: test
 
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17.6
+          go-version: 1.20.1
 
       - name: Get short SHA
         id: version
@@ -63,23 +63,23 @@ jobs:
       - run: go install github.com/mitchellh/gox@v1.0.2-0.20210311182516-8c3b2b9e647d
       - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - run: make release
         env:
           RELEASE: ${{ steps.version.outputs.sha8 }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: puma-dev-${{ steps.version.outputs.sha8 }}-linux-amd64
           path: rel/linux_amd64/puma-dev
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: puma-dev-${{ steps.version.outputs.sha8 }}-darwin-amd64
           path: rel/darwin_amd64/puma-dev
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: puma-dev-${{ steps.version.outputs.sha8 }}-darwin-arm64
           path: rel/darwin_arm64/puma-dev
