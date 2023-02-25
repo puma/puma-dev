@@ -13,9 +13,7 @@ require (
 	github.com/miekg/dns v1.1.29
 	github.com/stretchr/testify v1.5.1
 	github.com/vektra/errors v0.0.0-20140903201135-c64d83aba85a
-	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
-	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
