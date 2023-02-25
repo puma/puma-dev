@@ -10,9 +10,9 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17.6
+          go-version: 1.20.1
 
       - run: go install github.com/mitchellh/gox@v1.0.2-0.20210311182516-8c3b2b9e647d
       - run: echo $(go env GOPATH)/bin >> $GITHUB_PATH
@@ -21,7 +21,7 @@ jobs:
         id: get_version
         run: echo ::set-output name=RELEASE_VERSION::${GITHUB_REF#refs/tags/v}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - run: make release
         env:
