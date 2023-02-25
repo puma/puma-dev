@@ -1,12 +1,12 @@
 name: ci
 
-on: push
-  # # build pushes to master
-  # push:
-  #   branches:
-  #     - master
-  # # build PRs from forks
-  # pull_request:
+on:
+  # build pushes to master
+  push:
+    branches:
+      - '*'
+  # build PRs from forks
+  pull_request:
 
 jobs:
   test:
