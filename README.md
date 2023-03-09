@@ -176,7 +176,7 @@ On systems with SELinux you may have to run `restorecon /path/to/puma-dev` in or
 
 Simply symlink your app's directory into `~/.puma-dev`! That's it!
 
-You can use the built-in helper subcommand: `puma-dev link [-n name] [dir]` to link app directories into your puma-dev directory (`~/.puma-dev` by default).
+You can use the built-in helper subcommand: `puma-dev link [-n name] [dir]` to link app directories into your puma-dev directory (`~/.puma-dev` by default, but can be changed with `PUMA_DEV_APP_DIR`).
 
 ### Options
 
@@ -352,4 +352,3 @@ To build puma-dev, follow these steps:
 Tagged builds (e.g `v0.18.0`) will automatically create [pre-release](https://github.com/puma/puma-dev/releases) with artifacts for use in the Homebrew formula.
 
 All [builds with passing tests](https://github.com/puma/puma-dev/actions) will publish binaries that are saved for 90 days.
-
