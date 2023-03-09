@@ -21,7 +21,7 @@ var (
 	fDNSPort  = flag.Int("dns-port", 9253, "port to listen on dns for")
 	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
 	fTLSPort  = flag.Int("https-port", 9283, "port to listen on https for")
-	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
+	fDir      = flag.String("dir", dev.GetEnv("PUMA_DEV_APP_DIR", "~/.puma-dev"), "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
 	fPow      = flag.Bool("pow", false, "Mimic pow's settings")
 	fLaunch   = flag.Bool("launchd", false, "Use socket from launchd")

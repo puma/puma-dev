@@ -17,7 +17,7 @@ import (
 
 var (
 	fDebug              = flag.Bool("debug", false, "enable debug output")
-	fDir                = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
+	fDir                = flag.String("dir", dev.GetEnv("PUMA_DEV_APP_DIR", "~/.puma-dev"), "directory to watch for apps")
 	fDomains            = flag.String("d", "test", "domains to handle, separate with :, defaults to test")
 	fHTTPPort           = flag.Int("http-port", 9280, "port to listen on http for")
 	fNoServePublicPaths = flag.String("no-serve-public-paths", "", "Disable static file server for specific paths under /public")
