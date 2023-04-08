@@ -261,10 +261,10 @@ if test -e .pumaenv && [ "$PUMADEV_SOURCE_PUMAENV" != "0" ]; then
 fi
 
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
-	exec bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
+	exec $COMMAND_PREFIX bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s <&2
 fi
 
-exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
+exec $COMMAND_PREFIX puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
 `
 
 func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
@@ -283,6 +283,7 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		shell = "/bin/bash"
 	}
 
+ fmt.Print(executionShell)
 	cmd := exec.Command(shell, "-l", "-i", "-c",
 		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
 
