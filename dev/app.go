@@ -283,7 +283,6 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 		shell = "/bin/bash"
 	}
 
- fmt.Print(executionShell)
 	cmd := exec.Command(shell, "-l", "-i", "-c",
 		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
 
