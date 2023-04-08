@@ -261,7 +261,7 @@ if test -e .pumaenv && [ "$PUMADEV_SOURCE_PUMAENV" != "0" ]; then
 fi
 
 if test -e Gemfile && bundle exec puma -V &>/dev/null; then
-	exec $COMMAND_PREFIX bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s <&2
+	exec $COMMAND_PREFIX bundle exec puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s
 fi
 
 exec $COMMAND_PREFIX puma -C $CONFIG --tag puma-dev:%s -w $WORKERS -t 0:$THREADS -b unix:%s'
